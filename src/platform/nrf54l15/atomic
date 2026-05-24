@@ -1,0 +1,68 @@
+/*
+ * atomic — Minimal std::atomic for Zephyr nRF54L15 port.
+ *
+ * NotifiedWorkerThread uses std::atomic<uint32_t>.  On a bare-metal
+ * Cortex-M33 single-core system a simple volatile wrapper is sufficient
+ * for the cooperative-scheduler use case (no preemptive threading).
+ */
+#pragma once
+
+#include <stdint.h>
+#include <zephyr/kernel.h>  /* k_spinlock for IRQ safety */
+
+namespace std {
+
+template <typename T>
+class atomic {
+public:
+    atomic() : val_(T{}) {}
+    explicit atomic(T v) : val_(v) {}
+
+    /* Prevent copy */
+    atomic(const atomic &) = delete;
+    atomic &operator=(const atomic &) = delete;
+
+    T load() const volatile                { return val_; }
+    void store(T v)                        { val_ = v; }
+
+    T exchange(T v) {
+        unsigned int key = irq_lock();
+        T old = val_; val_ = v;
+        irq_unlock(key);
+        return old;
+    }
+
+    bool compare_exchange_weak(T &expected, T desired) {
+        unsigned int key = irq_lock();
+        bool ok = (val_ == expected);
+        if (ok) val_ = desired;
+        else expected = val_;
+        irq_unlock(key);
+        return ok;
+    }
+
+    T fetch_or(T v) {
+        unsigned int key = irq_lock();
+        T old = val_; val_ |= v;
+        irq_unlock(key);
+        return old;
+    }
+
+    T fetch_and(T v) {
+        unsigned int key = irq_lock();
+        T old = val_; val_ &= v;
+        irq_unlock(key);
+        return old;
+    }
+
+    /* Convenience operators */
+    operator T() const { return val_; }
+    T operator=(T v)   { store(v); return v; }
+    T operator|=(T v)  { return fetch_or(v) | v; }
+    T operator&=(T v)  { return fetch_and(v) & v; }
+
+private:
+    volatile T val_;
+};
+
+} // namespace std

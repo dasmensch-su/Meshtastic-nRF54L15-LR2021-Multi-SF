@@ -1,0 +1,19 @@
+/* cmath — Zephyr stub: maps to C math.h */
+#pragma once
+#include <math.h>
+/* C <math.h> may define isnan/isinf as macros — undef so std:: versions work */
+#undef isnan
+#undef isinf
+namespace std {
+    using ::ceil;
+    using ::floor;
+    using ::round;
+    using ::sqrt;
+    using ::pow;
+    using ::log;
+    using ::log2;
+    using ::fabs;
+    using ::fmod;
+    inline bool isnan(double x) { return __builtin_isnan(x); }
+    inline bool isinf(double x) { return __builtin_isinf(x); }
+}

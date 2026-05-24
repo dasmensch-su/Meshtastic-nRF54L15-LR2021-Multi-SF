@@ -1,0 +1,3 @@
+# Seeed Studio XIAO nRF54L15 — CMSIS-DAP debug probe + CDC serial
+# Install: sudo cp 99-xiao-nrf54l15.rules /etc/udev/rules.d/ && sudo udevadm control --reload-rules
+ATTRS{idVendor}=="2886", ATTRS{idProduct}=="0066", MODE="0666", GROUP="dialout"

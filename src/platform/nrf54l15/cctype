@@ -1,0 +1,19 @@
+/*
+ * cctype  Minimal shim. RedirectablePrint::vprintf uses std::isprint
+ * to scrub non-printable bytes out of debug log lines before sending
+ * them to the serial console. picolibc provides isprint() in <ctype.h>;
+ * we just expose the one symbol under the std:: namespace.
+ *
+ * We deliberately do NOT pull in extra symbols (isalpha, tolower, etc)
+ * because picolibc/Zephyr defines several of those as macros, and
+ * `using ::isalpha` from inside `namespace std` clashes with the macro
+ * expansion. The single using-decl below is enough for the upstream
+ * Meshtastic source paths that compile on this port.
+ */
+#pragma once
+
+#include <ctype.h>
+
+namespace std {
+    using ::isprint;
+}

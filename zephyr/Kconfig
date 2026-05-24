@@ -1,0 +1,85 @@
+mainmenu "Meshtastic nRF54L15"
+
+source "Kconfig.zephyr"
+
+config MESHTASTIC_FULL_STACK
+	bool "Full Meshtastic stack: OSThread cooperative scheduler + LR2021Interface"
+	default n
+	help
+	  Enables the full Meshtastic mesh stack integration.  Calls
+	  OSThread::setup(), creates an LR2021Interface via initLoRa(), and
+	  runs the cooperative scheduler loop (mainController + mainDelay).
+
+config NRF54L15_HARDWARE_CRYPTO
+	bool "Use CRACEN hardware AES acceleration"
+	default n
+	depends on MESHTASTIC_FULL_STACK
+	help
+	  When enabled, AES-CTR and AES-ECB operations use the nRF54L15
+	  CRACEN CryptoMaster hardware engine instead of software AES.
+	  Requires real hardware (CRACEN is not simulated in Renode).
+
+config MESHTASTIC_SEND_TEST_TEXT
+	bool "Send a test text message after boot"
+	default n
+	depends on MESHTASTIC_FULL_STACK
+	help
+	  After full stack initialization, sends a broadcast text message
+	  "Hello Mesh!" via the real Meshtastic Router/MeshService path.
+
+config MESHTASTIC_SEND_TARGET
+	hex "TX target node (0xFFFFFFFF = broadcast)"
+	default 0xFFFFFFFF
+	depends on MESHTASTIC_SEND_TEST_TEXT
+	help
+	  Destination NodeNum for the test text message.
+	  0xFFFFFFFF = broadcast (default).
+
+config MESHTASTIC_SEND_HOP_LIMIT
+	int "Hop limit for test text message"
+	default 3
+	depends on MESHTASTIC_SEND_TEST_TEXT
+	help
+	  Initial hop_limit for the test text message (0-7).
+
+config MESHTASTIC_CHANNEL_INDEX
+	int "Channel index for this node"
+	default 0
+	depends on MESHTASTIC_FULL_STACK
+	help
+	  Channel index used for TX and RX filtering.
+
+config MESHTASTIC_SEND_COUNT
+	int "Number of test text messages to send"
+	default 1
+	depends on MESHTASTIC_SEND_TEST_TEXT
+	help
+	  Number of test text messages to send on boot.
+
+config MESHTASTIC_FIXED_POSITION
+	bool "Set a fixed GPS position at boot"
+	default n
+	depends on MESHTASTIC_FULL_STACK
+	help
+	  Sets a hardcoded fixed position (37.7749N, -122.4194W, 10m alt)
+	  at boot. Useful for testing position broadcast without GPS hardware.
+
+config MESHTASTIC_DEBUG_LOGGING
+	bool "Enable SEGGER RTT debug logging"
+	default y
+	select CONSOLE
+	select RTT_CONSOLE
+	select USE_SEGGER_RTT
+	select LOG
+	select LOG_BACKEND_RTT
+	select LOG_PRINTK
+	help
+	  When enabled, all LOG_INFO/WARN/ERROR/DEBUG output and printk
+	  text is routed through SEGGER RTT (read on the host with
+	  `pyocd rtt -u <uid> -t nrf54l`). Costs ~120 KB of flash for
+	  the RTT subsystem + Zephyr log backend + retained format
+	  strings. Set =n for production deployments where remote
+	  debugging is not needed; LOG_* macros then compile to no-ops,
+	  printk goes nowhere, and the RTT/LOG subsystems are not
+	  linked in. SerialConsole CLI keeps working either way because
+	  it writes directly to uart_poll_out.

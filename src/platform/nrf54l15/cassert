@@ -1,0 +1,5 @@
+/* cassert — Zephyr stub: maps to C-level assert.h.
+ * Note: assert() is a macro in C; we cannot do `using ::assert`.
+ * Just including assert.h makes the assert() macro visible. */
+#pragma once
+#include <assert.h>

@@ -1,0 +1,112 @@
+.pio
+pio
+pio.tar
+web
+web.tar
+
+# ignore vscode IDE settings files
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/extensions.json
+*.code-workspace
+
+.idea
+.platformio
+.local
+.cache
+
+.DS_Store
+Thumbs.db
+.autotools
+.built
+.context
+.cproject
+.vagrant
+nanopb*
+flash.uf2
+cmake-build*
+__pycache__
+
+*.swp
+*.swo
+*~
+
+venv/
+.venv/
+release/
+.vscode/extensions.json
+/compile_commands.json
+src/mesh/raspihttp/certificate.pem
+src/mesh/raspihttp/private_key.pem
+
+# Ignore logo (set at build time with platformio-custom.py)
+data/boot/logo.*
+
+# pioarduino platform
+managed_components/*
+arduino-lib-builder*
+dependencies.lock
+idf_component.yml
+CMakeLists.txt
+# Exception: our hand-crafted Zephyr build entry (not PlatformIO-generated)
+!zephyr/CMakeLists.txt
+/sdkconfig.*
+.dummy/*
+
+# PYTHONPATH used by the Nix shell
+.python3
+
+# Zephyr/west build output directories
+build/
+build_*/
+zephyr/build_*/
+
+# Build artifacts
+*.obj
+*.elf
+*.a
+*.hex
+*.bin
+*.map
+*.o
+*.d
+*.pickle
+*.stat
+
+# Test/debug output
+log.html
+report.html
+output.xml
+results/
+logs/
+snapshots/
+monitor/
+
+# Local working dirs
+meshtastic
+
+# Copyrighted datasheets and schematics (not redistributable)
+docs/*.pdf
+docs/*.xlsx
+variants/**/*.pdf
+
+# Binary firmware blobs (Nordic SoftDevice, bootloaders)
+*.uf2
+bin/*.hex
+bin/*.bin
+bin/generic/
+
+# Speckit working dirs and constitution files
+meshtastic-nrf54l15-speckit/
+docs/speckit/
+speckit-constitution-general.md
+
+# Tests (not distributed — reviewers should validate independently)
+tests/
+
+# Claude Code project instructions (local development aid)
+CLAUDE.md
+
+# Upstream .github (CI, templates) not applicable to this fork
+.github/

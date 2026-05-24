@@ -1,0 +1,221 @@
+/*
+ * vector — Minimal std::vector for Zephyr nRF54L15 port.
+ */
+#pragma once
+
+#include <stdlib.h>
+#include <string.h>
+#include <stddef.h>
+#include <assert.h>
+#include <utility> /* std::move */
+
+/* Placement new — required for in-place construction.
+ * Zephyr's minimal C++ library may not declare this without -I into libstdc++. */
+#ifndef __PLACEMENT_NEW_INLINE
+#define __PLACEMENT_NEW_INLINE
+inline void* operator new  (size_t, void* p) noexcept { return p; }
+inline void  operator delete(void*, void*)    noexcept {}
+#endif
+
+namespace std {
+
+template <typename T>
+class vector {
+public:
+    typedef T*       iterator;
+    typedef const T* const_iterator;
+
+    vector() : data_(nullptr), size_(0), cap_(0) {}
+
+    vector(size_t n, const T &val = T())
+        : data_(nullptr), size_(0), cap_(0)
+    {
+        reserve(n);
+        for (size_t i = 0; i < n; ++i) push_back(val);
+    }
+
+    vector(const vector &o) : data_(nullptr), size_(0), cap_(0) {
+        reserve(o.size_);
+        for (size_t i = 0; i < o.size_; ++i) push_back(o.data_[i]);
+    }
+
+    vector(vector &&o) : data_(o.data_), size_(o.size_), cap_(o.cap_) {
+        o.data_ = nullptr; o.size_ = 0; o.cap_ = 0;
+    }
+
+    ~vector() {
+        for (size_t i = 0; i < size_; ++i) data_[i].~T();
+        free(data_);
+    }
+
+    vector &operator=(const vector &o) {
+        if (this != &o) {
+            clear();
+            reserve(o.size_);
+            for (size_t i = 0; i < o.size_; ++i) push_back(o.data_[i]);
+        }
+        return *this;
+    }
+
+    T       &operator[](size_t i)       { return data_[i]; }
+    const T &operator[](size_t i) const { return data_[i]; }
+    T       &at(size_t i)              { return data_[i]; }
+    const T &at(size_t i) const        { return data_[i]; }
+    T       &front()       { return data_[0]; }
+    const T &front() const { return data_[0]; }
+    T       &back()        { return data_[size_ - 1]; }
+    const T &back()  const { return data_[size_ - 1]; }
+
+    /* Forward iterators */
+    iterator       begin()       { return data_; }
+    const_iterator begin() const { return data_; }
+    iterator       end()         { return data_ + size_; }
+    const_iterator end()   const { return data_ + size_; }
+
+    /* Reverse iterator — minimal wrapper for pointer-based iteration */
+    class reverse_iterator {
+        T *ptr_;
+    public:
+        reverse_iterator(T *p) : ptr_(p) {}
+        T &operator*() { return *(ptr_ - 1); }
+        T *operator->() { return ptr_ - 1; }
+        reverse_iterator &operator++() { --ptr_; return *this; }
+        bool operator!=(const reverse_iterator &o) const { return ptr_ != o.ptr_; }
+        bool operator==(const reverse_iterator &o) const { return ptr_ == o.ptr_; }
+        T *base() const { return ptr_; }
+    };
+    reverse_iterator rbegin() { return reverse_iterator(data_ + size_); }
+    reverse_iterator rend()   { return reverse_iterator(data_); }
+
+    bool   empty() const { return size_ == 0; }
+    size_t size()  const { return size_; }
+
+    void reserve(size_t n) {
+        if (n <= cap_) return;
+        size_t nc = cap_ ? cap_ * 2 : 4;
+        if (nc < n) nc = n;
+        T *nb = (T*)malloc(nc * sizeof(T));
+        if (nb && size_) {
+            for (size_t i = 0; i < size_; ++i) {
+                new (&nb[i]) T(static_cast<T&&>(data_[i]));
+                data_[i].~T();
+            }
+        }
+        free(data_);
+        data_ = nb;
+        cap_ = nc;
+    }
+
+    void push_back(const T &val) {
+        reserve(size_ + 1);
+        new (&data_[size_++]) T(val);
+    }
+
+    void push_back(T &&val) {
+        reserve(size_ + 1);
+        new (&data_[size_++]) T(static_cast<T&&>(val));
+    }
+
+    template <typename... Args>
+    T &emplace_back(Args&&... args) {
+        reserve(size_ + 1);
+        new (&data_[size_]) T(static_cast<Args&&>(args)...);
+        return data_[size_++];
+    }
+
+    void pop_back() {
+        if (size_) data_[--size_].~T();
+    }
+
+    void clear() {
+        for (size_t i = 0; i < size_; ++i) data_[i].~T();
+        size_ = 0;
+    }
+
+    void shrink_to_fit() { /* no-op for minimal implementation */ }
+
+    void resize(size_t n, const T &val = T()) {
+        if (n < size_) {
+            for (size_t i = n; i < size_; ++i) data_[i].~T();
+            size_ = n;
+        } else if (n > size_) {
+            reserve(n);
+            for (size_t i = size_; i < n; ++i) new (&data_[i]) T(val);
+            size_ = n;
+        }
+    }
+
+    T *data() { return data_; }
+    const T *data() const { return data_; }
+
+    iterator erase(iterator pos) {
+        if (pos < data_ || pos >= data_ + size_) return data_ + size_;
+        pos->~T();
+        size_t idx = pos - data_;
+        for (size_t i = idx; i + 1 < size_; ++i) {
+            new (&data_[i]) T(static_cast<T&&>(data_[i+1]));
+            data_[i+1].~T();
+        }
+        --size_;
+        return data_ + idx;
+    }
+
+    iterator insert(iterator pos, const T &val) {
+        size_t idx = pos - data_;
+        reserve(size_ + 1);
+        pos = data_ + idx;
+        for (size_t i = size_; i > idx; --i) {
+            new (&data_[i]) T(static_cast<T&&>(data_[i-1]));
+            data_[i-1].~T();
+        }
+        new (pos) T(val);
+        ++size_;
+        return pos;
+    }
+
+    template <typename InputIt>
+    iterator insert(iterator pos, InputIt first, InputIt last) {
+        size_t idx = pos - data_;
+        size_t count = 0;
+        for (InputIt it = first; it != last; ++it) ++count;
+        if (count == 0) return data_ + idx;
+        reserve(size_ + count);
+        pos = data_ + idx;
+        for (size_t i = size_; i > idx; --i) {
+            new (&data_[i + count - 1]) T(static_cast<T&&>(data_[i - 1]));
+            data_[i - 1].~T();
+        }
+        size_t j = idx;
+        for (InputIt it = first; it != last; ++it, ++j) {
+            new (&data_[j]) T(*it);
+        }
+        size_ += count;
+        return data_ + idx;
+    }
+
+    void swap(vector &other) {
+        T *td = data_;       size_t ts = size_;   size_t tc = cap_;
+        data_ = other.data_; size_ = other.size_; cap_ = other.cap_;
+        other.data_ = td;    other.size_ = ts;    other.cap_ = tc;
+    }
+
+    iterator erase(iterator first, iterator last) {
+        if (first == last) return first;
+        size_t idx = first - data_;
+        size_t count = last - first;
+        for (size_t i = 0; i < count; ++i) first[i].~T();
+        for (size_t i = idx + count; i < size_; ++i) {
+            new (&data_[i - count]) T(static_cast<T&&>(data_[i]));
+            data_[i].~T();
+        }
+        size_ -= count;
+        return data_ + idx;
+    }
+
+private:
+    T      *data_;
+    size_t  size_;
+    size_t  cap_;
+};
+
+} // namespace std

@@ -1,0 +1,67 @@
+/*
+ * map — Minimal std::map stub for Zephyr nRF54L15 port.
+ * Implemented as sorted vector of pairs (linear search).
+ */
+#pragma once
+
+#include "vector"
+#include "utility"
+
+namespace std {
+
+template <typename Key, typename Value>
+class map {
+public:
+    using value_type = pair<const Key, Value>;
+    using iterator = typename vector<value_type>::iterator;
+    using const_iterator = typename vector<value_type>::const_iterator;
+
+    iterator begin() { return data_.begin(); }
+    iterator end() { return data_.end(); }
+    const_iterator begin() const { return data_.begin(); }
+    const_iterator end() const { return data_.end(); }
+
+    size_t size() const { return data_.size(); }
+    bool empty() const { return data_.empty(); }
+
+    Value &operator[](const Key &k) {
+        for (auto &p : data_)
+            if (p.first == k) return p.second;
+        data_.push_back(value_type(k, Value()));
+        return data_.back().second;
+    }
+
+    iterator find(const Key &k) {
+        for (auto it = data_.begin(); it != data_.end(); ++it)
+            if (it->first == k) return it;
+        return data_.end();
+    }
+
+    const_iterator find(const Key &k) const {
+        for (auto it = data_.begin(); it != data_.end(); ++it)
+            if (it->first == k) return it;
+        return data_.end();
+    }
+
+    size_t erase(const Key &k) {
+        for (auto it = data_.begin(); it != data_.end(); ++it) {
+            if (it->first == k) { data_.erase(it); return 1; }
+        }
+        return 0;
+    }
+
+    iterator erase(iterator pos) { return data_.erase(pos); }
+
+    void clear() { data_.clear(); }
+
+    size_t count(const Key &k) const {
+        for (const auto &p : data_)
+            if (p.first == k) return 1;
+        return 0;
+    }
+
+private:
+    vector<value_type> data_;
+};
+
+} // namespace std

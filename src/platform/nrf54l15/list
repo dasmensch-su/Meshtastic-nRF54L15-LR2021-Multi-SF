@@ -1,0 +1,116 @@
+/*
+ * list — Minimal std::list for Zephyr nRF54L15 port.
+ *
+ * Observer.h uses std::list<T*> with: push_back, remove, clear,
+ * begin/end (const_iterator), and range-for iteration.
+ */
+#pragma once
+
+#include <stddef.h>
+#include <stdlib.h>
+
+namespace std {
+
+template <typename T>
+class list {
+    struct Node {
+        T     val;
+        Node *next;
+        Node(const T &v) : val(v), next(nullptr) {}
+    };
+
+public:
+    /* iterator and const_iterator share the same Node*; const_iterator
+     * is implicitly constructible from iterator. */
+    struct iterator {
+        Node *node_;
+        iterator(Node *n) : node_(n) {}
+        T       &operator*()  { return node_->val; }
+        T       *operator->() { return &node_->val; }
+        iterator &operator++() { node_ = node_->next; return *this; }
+        bool operator==(const iterator &o) const { return node_ == o.node_; }
+        bool operator!=(const iterator &o) const { return node_ != o.node_; }
+    };
+
+    struct const_iterator {
+        Node *node_;
+        const_iterator(Node *n) : node_(n) {}
+        /* implicit conversion from iterator */
+        const_iterator(const iterator &it) : node_(it.node_) {}
+        const T &operator*()  const { return node_->val; }
+        const T *operator->() const { return &node_->val; }
+        const_iterator &operator++() { node_ = node_->next; return *this; }
+        bool operator==(const const_iterator &o) const { return node_ == o.node_; }
+        bool operator!=(const const_iterator &o) const { return node_ != o.node_; }
+    };
+
+    list() : head_(nullptr), tail_(nullptr), size_(0) {}
+
+    list(const list &o) : head_(nullptr), tail_(nullptr), size_(0) {
+        for (Node *n = o.head_; n; n = n->next) push_back(n->val);
+    }
+
+    ~list() { clear(); }
+
+    list &operator=(const list &o) {
+        if (this != &o) {
+            clear();
+            for (Node *n = o.head_; n; n = n->next) push_back(n->val);
+        }
+        return *this;
+    }
+
+    bool   empty() const { return size_ == 0; }
+    size_t size()  const { return size_; }
+
+    iterator       begin()       { return iterator(head_); }
+    const_iterator begin() const { return const_iterator(head_); }
+    iterator       end()         { return iterator(nullptr); }
+    const_iterator end()   const { return const_iterator(nullptr); }
+
+    void push_back(const T &val) {
+        Node *n = new Node(val);
+        if (tail_) tail_->next = n;
+        else head_ = n;
+        tail_ = n;
+        ++size_;
+    }
+
+    /* Remove all elements equal to val */
+    void remove(const T &val) {
+        Node *prev = nullptr;
+        Node *curr = head_;
+        while (curr) {
+            if (curr->val == val) {
+                Node *next = curr->next;
+                if (prev) prev->next = next;
+                else      head_ = next;
+                if (curr == tail_) tail_ = prev;
+                delete curr;
+                --size_;
+                curr = next;
+            } else {
+                prev = curr;
+                curr = curr->next;
+            }
+        }
+    }
+
+    void clear() {
+        Node *n = head_;
+        while (n) {
+            Node *next = n->next;
+            delete n;
+            n = next;
+        }
+        head_ = tail_ = nullptr;
+        size_ = 0;
+    }
+
+private:
+    Node  *head_;
+    Node  *tail_;
+    size_t size_;
+};
+
+} // namespace std

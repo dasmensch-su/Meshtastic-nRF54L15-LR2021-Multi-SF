@@ -1,0 +1,55 @@
+/*
+ * functional — Minimal std::function for Zephyr nRF54L15 port.
+ */
+#pragma once
+
+#include <stddef.h>
+#include <type_traits>
+
+namespace std {
+
+template <typename Sig> class function;
+
+template <typename Ret, typename... Args>
+class function<Ret(Args...)> {
+    struct Base {
+        virtual Ret call(Args... args) = 0;
+        virtual Base *clone() const = 0;
+        virtual ~Base() {}
+    };
+    template <typename F>
+    struct Impl : Base {
+        F f_;
+        Impl(const F &f) : f_(f) {}
+        Ret call(Args... args) override { return f_(args...); }
+        Base *clone() const override { return new Impl(f_); }
+    };
+    Base *ptr_ = nullptr;
+public:
+    function() : ptr_(nullptr) {}
+    function(decltype(nullptr)) : ptr_(nullptr) {}
+
+    /* Only match callable types (exclude integral types like int from literal 0) */
+    template <typename F, typename = typename enable_if<!is_integral<F>::value>::type>
+    function(F f) : ptr_(new Impl<F>(f)) {}
+
+    function(const function &o) : ptr_(o.ptr_ ? o.ptr_->clone() : nullptr) {}
+    function(function &&o) : ptr_(o.ptr_) { o.ptr_ = nullptr; }
+
+    function &operator=(const function &o) {
+        if (this != &o) { delete ptr_; ptr_ = o.ptr_ ? o.ptr_->clone() : nullptr; }
+        return *this;
+    }
+    function &operator=(function &&o) {
+        if (this != &o) { delete ptr_; ptr_ = o.ptr_; o.ptr_ = nullptr; }
+        return *this;
+    }
+    function &operator=(decltype(nullptr)) { delete ptr_; ptr_ = nullptr; return *this; }
+
+    ~function() { delete ptr_; }
+
+    Ret operator()(Args... args) const { return ptr_->call(args...); }
+    explicit operator bool() const { return ptr_ != nullptr; }
+};
+
+} // namespace std

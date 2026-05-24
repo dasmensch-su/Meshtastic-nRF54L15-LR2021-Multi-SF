@@ -1,0 +1,4 @@
+[libfuzzer]
+# Max input length covers a full 9-byte header + the maximum ciphertext
+# sizeof(MeshPacket::encrypted.bytes) currently 256.
+max_len=265

@@ -1,0 +1,139 @@
+/*
+ * memory — Minimal std::unique_ptr for Zephyr nRF54L15 port.
+ */
+#pragma once
+
+#include <stddef.h>
+
+namespace std {
+
+/* Default deleter */
+template <typename T>
+struct default_delete {
+    void operator()(T *p) const { delete p; }
+};
+
+/* unique_ptr */
+template <typename T, typename D = default_delete<T>>
+class unique_ptr {
+public:
+    unique_ptr() : ptr_(nullptr) {}
+    unique_ptr(decltype(nullptr)) : ptr_(nullptr) {}
+    explicit unique_ptr(T *p) : ptr_(p) {}
+    unique_ptr(unique_ptr &&o) : ptr_(o.ptr_) { o.ptr_ = nullptr; }
+    unique_ptr(const unique_ptr &) = delete;
+    ~unique_ptr() { if (ptr_) D()(ptr_); }
+
+    unique_ptr &operator=(unique_ptr &&o) {
+        if (this != &o) { reset(); ptr_ = o.ptr_; o.ptr_ = nullptr; }
+        return *this;
+    }
+    unique_ptr &operator=(const unique_ptr &) = delete;
+    unique_ptr &operator=(decltype(nullptr)) { reset(); return *this; }
+
+    T *get()       const { return ptr_; }
+    T *operator->() const { return ptr_; }
+    T &operator*()  const { return *ptr_; }
+    explicit operator bool() const { return ptr_ != nullptr; }
+
+    T *release() { T *p = ptr_; ptr_ = nullptr; return p; }
+
+    void reset(T *p = nullptr) {
+        if (ptr_) D()(ptr_);
+        ptr_ = p;
+    }
+
+    friend bool operator==(const unique_ptr &a, decltype(nullptr)) { return a.ptr_ == nullptr; }
+    friend bool operator!=(const unique_ptr &a, decltype(nullptr)) { return a.ptr_ != nullptr; }
+
+private:
+    T *ptr_;
+};
+
+template <typename T, typename... Args>
+unique_ptr<T> make_unique(Args&&... args) {
+    return unique_ptr<T>(new T(static_cast<Args&&>(args)...));
+}
+
+/* Array specialisation: unique_ptr<T[]> uses delete[] and supports
+ * operator[]. RedirectablePrint::log_to_serial/log_to_syslog allocate
+ * char/uint8_t buffers via make_unique<char[]>(N) and indexed access
+ * to format the log message; without this they hit "unknown array size
+ * in delete" and "no matching function" for operator[]. */
+template <typename T>
+struct default_delete<T[]> {
+    void operator()(T *p) const { delete[] p; }
+};
+
+template <typename T>
+class unique_ptr<T[], default_delete<T[]>> {
+public:
+    unique_ptr() : ptr_(nullptr) {}
+    unique_ptr(decltype(nullptr)) : ptr_(nullptr) {}
+    explicit unique_ptr(T *p) : ptr_(p) {}
+    unique_ptr(unique_ptr &&o) : ptr_(o.ptr_) { o.ptr_ = nullptr; }
+    unique_ptr(const unique_ptr &) = delete;
+    ~unique_ptr() { delete[] ptr_; }
+
+    unique_ptr &operator=(unique_ptr &&o) {
+        if (this != &o) { reset(); ptr_ = o.ptr_; o.ptr_ = nullptr; }
+        return *this;
+    }
+    unique_ptr &operator=(const unique_ptr &) = delete;
+    unique_ptr &operator=(decltype(nullptr)) { reset(); return *this; }
+
+    T &operator[](size_t i) const { return ptr_[i]; }
+    T *get() const { return ptr_; }
+    explicit operator bool() const { return ptr_ != nullptr; }
+
+    T *release() { T *p = ptr_; ptr_ = nullptr; return p; }
+    void reset(T *p = nullptr) { delete[] ptr_; ptr_ = p; }
+
+private:
+    T *ptr_;
+};
+
+/* No make_unique<T[]>(n) overload  the call sites in RedirectablePrint
+ * use the constructor form `unique_ptr<T[]>(new T[N])` directly, which
+ * matches the partial specialisation above. */
+
+/* shared_ptr — minimal non-thread-safe stub */
+template <typename T>
+class shared_ptr {
+public:
+    shared_ptr() : ptr_(nullptr), ref_(nullptr) {}
+    shared_ptr(decltype(nullptr)) : ptr_(nullptr), ref_(nullptr) {}
+    explicit shared_ptr(T *p) : ptr_(p), ref_(new int(1)) {}
+    shared_ptr(const shared_ptr &o) : ptr_(o.ptr_), ref_(o.ref_) { if (ref_) ++*ref_; }
+    shared_ptr(shared_ptr &&o) : ptr_(o.ptr_), ref_(o.ref_) { o.ptr_ = nullptr; o.ref_ = nullptr; }
+    ~shared_ptr() { release(); }
+
+    shared_ptr &operator=(const shared_ptr &o) {
+        if (this != &o) { release(); ptr_ = o.ptr_; ref_ = o.ref_; if (ref_) ++*ref_; }
+        return *this;
+    }
+    shared_ptr &operator=(shared_ptr &&o) {
+        if (this != &o) { release(); ptr_ = o.ptr_; ref_ = o.ref_; o.ptr_ = nullptr; o.ref_ = nullptr; }
+        return *this;
+    }
+
+    T *get() const { return ptr_; }
+    T *operator->() const { return ptr_; }
+    T &operator*() const { return *ptr_; }
+    explicit operator bool() const { return ptr_ != nullptr; }
+
+private:
+    void release() {
+        if (ref_ && --*ref_ == 0) { delete ptr_; delete ref_; }
+        ptr_ = nullptr; ref_ = nullptr;
+    }
+    T *ptr_;
+    int *ref_;
+};
+
+template <typename T, typename... Args>
+shared_ptr<T> make_shared(Args&&... args) {
+    return shared_ptr<T>(new T(static_cast<Args&&>(args)...));
+}
+
+} // namespace std

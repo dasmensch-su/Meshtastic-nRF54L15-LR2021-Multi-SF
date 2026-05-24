@@ -1,0 +1,27 @@
+/* stdexcept — Zephyr -nostdinc++ stub */
+#pragma once
+#include <cstdlib>
+/* Fix macro isnan/isinf from C <math.h> breaking std:: usage.
+ * Include cmath which undefs the macros and provides std::isnan. */
+#include <cmath>
+namespace std {
+    class exception {
+    public:
+        virtual ~exception() {}
+        virtual const char *what() const noexcept { return "exception"; }
+    };
+    class runtime_error : public exception {
+        const char *msg_;
+    public:
+        explicit runtime_error(const char *m) : msg_(m) {}
+        const char *what() const noexcept override { return msg_; }
+    };
+    class out_of_range : public runtime_error {
+    public:
+        explicit out_of_range(const char *m) : runtime_error(m) {}
+    };
+    class invalid_argument : public runtime_error {
+    public:
+        explicit invalid_argument(const char *m) : runtime_error(m) {}
+    };
+}

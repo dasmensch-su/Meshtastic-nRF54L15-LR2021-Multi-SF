@@ -1,0 +1,47 @@
+/*
+ * queue — Minimal std::queue for Zephyr nRF54L15 port.
+ *
+ * TypedQueue.h (non-FreeRTOS path) uses std::queue<T>.
+ * Implemented as a circular buffer using std::vector.
+ */
+#pragma once
+#include "vector"
+
+namespace std {
+
+template <typename T>
+class queue {
+public:
+    queue() : head_(0) {}
+
+    bool   empty() const { return head_ >= data_.size(); }
+    size_t size()  const { return data_.size() > head_ ? data_.size() - head_ : 0; }
+
+    T       &front()       { return data_[head_]; }
+    const T &front() const { return data_[head_]; }
+    T       &back()        { return data_.back(); }
+    const T &back()  const { return data_.back(); }
+
+    void push(const T &val) { data_.push_back(val); }
+
+    void pop() {
+        if (head_ < data_.size()) {
+            ++head_;
+            /* Compact the buffer once head reaches halfway to avoid runaway growth */
+            if (head_ >= 8 && head_ >= data_.size() / 2) {
+                vector<T> tmp;
+                tmp.reserve(data_.size() - head_);
+                for (size_t i = head_; i < data_.size(); ++i)
+                    tmp.push_back(data_[i]);
+                data_ = static_cast<vector<T>&&>(tmp);
+                head_ = 0;
+            }
+        }
+    }
+
+private:
+    vector<T> data_;
+    size_t    head_;
+};
+
+} // namespace std

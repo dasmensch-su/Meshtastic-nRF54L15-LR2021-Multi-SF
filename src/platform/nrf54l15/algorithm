@@ -1,0 +1,133 @@
+/*
+ * algorithm — Minimal std::algorithm for Zephyr nRF54L15 port.
+ *
+ * Provides: std::find, std::upper_bound, std::sort, std::min, std::max.
+ */
+#pragma once
+
+#include <stddef.h>
+
+namespace std {
+
+/* find */
+template <typename Iter, typename T>
+Iter find(Iter first, Iter last, const T &val) {
+    for (; first != last; ++first)
+        if (*first == val) return first;
+    return last;
+}
+
+/* upper_bound (binary search returning first element > val) */
+template <typename Iter, typename T, typename Cmp>
+Iter upper_bound(Iter first, Iter last, const T &val, Cmp cmp) {
+    size_t count = last - first;
+    while (count > 0) {
+        size_t step = count / 2;
+        Iter it = first + step;
+        if (!cmp(val, *it)) {
+            first = it + 1;
+            count -= step + 1;
+        } else {
+            count = step;
+        }
+    }
+    return first;
+}
+
+template <typename Iter, typename T>
+Iter upper_bound(Iter first, Iter last, const T &val) {
+    size_t count = last - first;
+    while (count > 0) {
+        size_t step = count / 2;
+        Iter it = first + step;
+        if (*it <= val) {
+            first = it + 1;
+            count -= step + 1;
+        } else {
+            count = step;
+        }
+    }
+    return first;
+}
+
+/* min / max — undef Arduino macros to avoid conflicts */
+#undef min
+#undef max
+template <typename T>
+const T &min(const T &a, const T &b) { return a < b ? a : b; }
+
+template <typename T>
+const T &max(const T &a, const T &b) { return a > b ? a : b; }
+
+/* sort (insertion sort — simple, adequate for small queues) */
+template <typename Iter, typename Cmp>
+void sort(Iter first, Iter last, Cmp cmp) {
+    if (first == last || first == nullptr) return;
+    for (Iter i = first + 1; i != last; ++i) {
+        auto key = *i;
+        Iter j = i;
+        while (j != first && cmp(key, *(j-1))) {
+            *j = *(j-1);
+            --j;
+        }
+        *j = key;
+    }
+}
+
+template <typename Iter>
+void sort(Iter first, Iter last) {
+    if (first == last || first == nullptr) return;
+    for (Iter i = first + 1; i != last; ++i) {
+        auto key = *i;
+        Iter j = i;
+        while (j != first && key < *(j-1)) {
+            *j = *(j-1);
+            --j;
+        }
+        *j = key;
+    }
+}
+
+/* min_element / max_element */
+template <typename Iter>
+Iter min_element(Iter first, Iter last) {
+    if (first == last) return last;
+    Iter smallest = first;
+    for (++first; first != last; ++first)
+        if (*first < *smallest) smallest = first;
+    return smallest;
+}
+
+template <typename Iter, typename Cmp>
+Iter min_element(Iter first, Iter last, Cmp cmp) {
+    if (first == last) return last;
+    Iter smallest = first;
+    for (++first; first != last; ++first)
+        if (cmp(*first, *smallest)) smallest = first;
+    return smallest;
+}
+
+/* swap */
+template <typename T>
+void swap(T &a, T &b) { T tmp = a; a = b; b = tmp; }
+
+/* fill */
+template <typename Iter, typename T>
+void fill(Iter first, Iter last, const T &val) {
+    for (; first != last; ++first) *first = val;
+}
+
+/* remove */
+template <typename Iter, typename T>
+Iter remove(Iter first, Iter last, const T &val) {
+    Iter result = first;
+    for (; first != last; ++first)
+        if (!(*first == val)) { *result = *first; ++result; }
+    return result;
+}
+
+} // namespace std
+
+/* Expose min/max at global scope for Arduino-style code (bare min(a,b)) */
+using std::min;
+using std::max;

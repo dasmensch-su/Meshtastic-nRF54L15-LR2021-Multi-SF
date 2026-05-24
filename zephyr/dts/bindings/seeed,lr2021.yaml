@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: Apache-2.0
+description: Semtech LR2021 LoRa Transceiver (2-byte opcode SPI protocol)
+compatible: "seeed,lr2021"
+include: [spi-device.yaml, base.yaml]
+
+properties:
+  irq-gpios:
+    type: phandle-array
+    description: GPIO connected to DIO IRQ output (DIO5 in Renode, DIO8 on hardware)
+  busy-gpios:
+    type: phandle-array
+    required: false
+    description: GPIO connected to BUSY output (active-high). Optional — only on real hardware.
+  reset-gpios:
+    type: phandle-array
+    required: false
+    description: GPIO connected to RESET input (active-low). Optional — only on real hardware.

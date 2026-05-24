@@ -1,0 +1,43 @@
+/*
+ * cstdlib — Zephyr minimal C++ stub for nRF54L15 port.
+ *
+ * Zephyr's minimal C++ library only provides cstddef, cstdint, and new.
+ * This stub satisfies #include <cstdlib> from Meshtastic headers (e.g.
+ * OSThread.h) by pulling in the picolibc C-level <stdlib.h> and aliasing
+ * the functions and types into the std:: namespace.
+ *
+ * Only aliases that are safe on picolibc/Zephyr are included; anything
+ * requiring the full hosted C++ runtime (e.g. wcstombs) is omitted.
+ */
+#pragma once
+
+#include <stdlib.h>
+#include <stddef.h>
+
+namespace std {
+    using ::size_t;
+    using ::div_t;
+    using ::ldiv_t;
+    using ::abs;
+    using ::div;
+    using ::labs;
+    using ::ldiv;
+    using ::atoi;
+    using ::atol;
+    using ::atof;
+    using ::strtol;
+    using ::strtoul;
+    using ::strtod;
+    using ::strtof;
+    using ::malloc;
+    using ::calloc;
+    using ::realloc;
+    using ::free;
+    using ::rand;
+    using ::srand;
+    using ::abort;
+    using ::exit;
+    using ::atexit;
+    using ::qsort;
+    using ::bsearch;
+}

@@ -1,0 +1,8 @@
+/* cstdio — Minimal stub for Zephyr nRF54L15 port */
+#pragma once
+#include <stdio.h>
+namespace std {
+    using ::vsnprintf;
+    using ::snprintf;
+    using ::printf;
+}

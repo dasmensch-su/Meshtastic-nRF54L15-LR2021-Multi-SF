@@ -1,0 +1,90 @@
+/*
+ * Meshtastic nRF54L15 — DTS overlay for REAL HARDWARE (XIAO nRF54L15 + Wio-LR2021)
+ *
+ * Uses spi00 (XIAO connector SPI) on Port 2 pins, matching the physical
+ * Wio-LR2021 shield pinout. This differs from the simulation overlay which
+ * uses spi22 on Port 1 pins (to match the Renode platform model).
+ *
+ * Pin mapping (matches official semtech_wio_lr2021 shield):
+ *   D0  (P1.4)  → DIO8 (IRQ output)
+ *   D1  (P1.5)  → BUSY
+ *   D2  (P1.6)  → RESET (active-low)
+ *   D3  (P1.7)  → CS (active-low)
+ *   D8  (P2.1)  → SPI SCK
+ *   D9  (P2.4)  → SPI MISO
+ *   D10 (P2.2)  → SPI MOSI
+ *
+ * SPI pinctrl for spi00 is already defined in xiao_nrf54l15-pinctrl.dtsi
+ * and enabled in xiao_nrf54l15_nrf54l15_cpuapp.dts — no pinctrl override needed.
+ */
+
+#include <zephyr/dt-bindings/gpio/gpio.h>
+
+/*
+ * The nRF54L15 has 256 KB SRAM total, split as 188 KB (cpuapp) + 68 KB
+ * (cpuflpr) by default. We don't use the FLPR core, so give all 256 KB
+ * to cpuapp.
+ */
+&cpuapp_sram {
+	reg = <0x20000000 DT_SIZE_K(256)>;
+	ranges = <0x0 0x20000000 DT_SIZE_K(256)>;
+};
+
+/*
+ * Enable RF switch regulators on the LoRa Plus expansion board.
+ * These control the antenna path — without them, the LR2021 has no RF output.
+ * rfsw_ctl (P2.5) = RF switch control, rfsw_pwr (P2.3) = RF switch power.
+ */
+&rfsw_ctl {
+	regulator-boot-on;
+	status = "okay";
+};
+
+&rfsw_pwr {
+	regulator-boot-on;
+	status = "okay";
+};
+
+/*
+ * SSD1306 128x64 OLED on the LoRa Plus expansion board.
+ * Connected via I2C22 (D4=P1.10 SDA, D5=P1.11 SCL) at address 0x3c.
+ * I2C22 pinctrl is already defined in the board DTS.
+ */
+/ {
+	chosen {
+		zephyr,display = &ssd1306_128x64;
+	};
+};
+
+&i2c22 {
+	status = "okay";
+	zephyr,concat-buf-size = <4096>;
+
+	ssd1306_128x64: ssd1306@3c {
+		compatible = "solomon,ssd1306fb";
+		reg = <0x3c>;
+		width = <128>;
+		height = <64>;
+		segment-offset = <0>;
+		page-offset = <0>;
+		display-offset = <0>;
+		multiplex-ratio = <63>;
+		segment-remap;
+		com-invdir;
+		prechargep = <0x22>;
+	};
+};
+
+&spi00 {
+	status = "okay";
+	cs-gpios = <&gpio1 7 GPIO_ACTIVE_LOW>;  /* D3 */
+
+	lr2021: lr2021@0 {
+		compatible = "seeed,lr2021";
+		reg = <0>;
+		spi-max-frequency = <DT_FREQ_M(8)>;
+		irq-gpios = <&gpio1 4 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;    /* D0 — DIO8 */
+		busy-gpios = <&gpio1 5 GPIO_ACTIVE_HIGH>;   /* D1 */
+		reset-gpios = <&gpio1 6 GPIO_ACTIVE_LOW>;   /* D2 */
+	};
+};

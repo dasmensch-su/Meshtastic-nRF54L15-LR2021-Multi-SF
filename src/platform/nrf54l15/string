@@ -1,0 +1,260 @@
+/*
+ * string — Minimal std::string for Zephyr nRF54L15 port.
+ *
+ * Zephyr's minimal C++ library (-nostdinc++) does not provide <string>.
+ * This stub is placed in src/platform/nrf54l15/ (first in the -I list)
+ * so it shadows the system header.
+ *
+ * Provides a std::string class backed by heap-allocated char* storage.
+ * Only the methods actually used by Meshtastic's cooperative threading
+ * layer (Thread.h, OSThread.cpp) are implemented.  The Arduino String
+ * class (Arduino.h) provides its own complete string handling and does
+ * NOT inherit from this class.
+ */
+#pragma once
+
+#include <string.h>
+#include <stdlib.h>
+#include <stddef.h>
+#include <stdio.h>
+
+namespace std {
+
+class string {
+public:
+    static const size_t npos = (size_t)-1;
+
+    /* --- Constructors / destructor --- */
+
+    string() : buf_(nullptr), len_(0) {}
+
+    string(const char *s) : buf_(nullptr), len_(0) {
+        if (s) _assign(s, strlen(s));
+    }
+
+    /* Fill constructor: string(count, char) */
+    string(size_t count, char c) : buf_(nullptr), len_(0) {
+        if (count == 0) return;
+        buf_ = (char*)malloc(count + 1);
+        if (!buf_) return;
+        for (size_t i = 0; i < count; ++i) buf_[i] = c;
+        buf_[count] = '\0';
+        len_ = count;
+    }
+
+    string(const string &o) : buf_(nullptr), len_(0) {
+        _assign(o.buf_ ? o.buf_ : "", o.len_);
+    }
+
+    string(string &&o) : buf_(o.buf_), len_(o.len_) {
+        o.buf_ = nullptr; o.len_ = 0;
+    }
+
+    ~string() { free(buf_); }
+
+    /* --- Assignment --- */
+
+    string &operator=(const string &o) {
+        if (this != &o) _assign(o.buf_ ? o.buf_ : "", o.len_);
+        return *this;
+    }
+    string &operator=(const char *s) {
+        _assign(s ? s : "", s ? strlen(s) : 0);
+        return *this;
+    }
+
+    /* --- Access --- */
+
+    const char *c_str() const { return buf_ ? buf_ : ""; }
+    size_t size()        const { return len_; }
+    size_t length()      const { return len_; }
+    bool   empty()       const { return len_ == 0; }
+    void   clear()             { free(buf_); buf_ = nullptr; len_ = 0; }
+    void   reserve(size_t)     {}
+
+    char  operator[](size_t i) const { return buf_ ? buf_[i] : '\0'; }
+    char &operator[](size_t i)       { return buf_[i]; }
+
+    char  at(size_t i) const { return buf_ ? buf_[i] : '\0'; }
+    char &at(size_t i)       { return buf_[i]; }
+
+    /* assign — used by Arduino.h String helpers */
+    string &assign(const char *s) {
+        _assign(s ? s : "", s ? strlen(s) : 0);
+        return *this;
+    }
+    string &assign(const char *s, size_t n) {
+        _assign(s ? s : "", n);
+        return *this;
+    }
+    string &assign(const string &o) {
+        if (this != &o) _assign(o.buf_ ? o.buf_ : "", o.len_);
+        return *this;
+    }
+
+    /* --- Iterators (minimal, needed by range-for) --- */
+    char *begin() { return buf_ ? buf_ : (char*)""; }
+    char *end()   { return buf_ ? buf_ + len_ : (char*)""; }
+    const char *begin() const { return buf_ ? buf_ : ""; }
+    const char *end()   const { return buf_ ? buf_ + len_ : ""; }
+
+    /* --- Comparison --- */
+
+    bool operator==(const string &o) const {
+        return len_ == o.len_ && memcmp(c_str(), o.c_str(), len_) == 0;
+    }
+    bool operator!=(const string &o) const { return !(*this == o); }
+    bool operator< (const string &o) const { return strcmp(c_str(), o.c_str()) < 0; }
+    bool operator<=(const string &o) const { return strcmp(c_str(), o.c_str()) <= 0; }
+    bool operator> (const string &o) const { return strcmp(c_str(), o.c_str()) > 0; }
+    bool operator>=(const string &o) const { return strcmp(c_str(), o.c_str()) >= 0; }
+
+    bool operator==(const char *s) const { return s && strcmp(c_str(), s) == 0; }
+    bool operator!=(const char *s) const { return !(*this == s); }
+
+    int compare(const string &o) const { return strcmp(c_str(), o.c_str()); }
+    int compare(const char   *s) const { return strcmp(c_str(), s ? s : ""); }
+
+    /* --- Append --- */
+
+    string &append(const string &o) { return append(o.c_str(), o.len_); }
+    string &append(const char   *s) { if (s) append(s, strlen(s)); return *this; }
+    string &append(const char *s, size_t n) {
+        if (!s || n == 0) return *this;
+        char *nb = (char*)malloc(len_ + n + 1);
+        if (!nb) return *this;
+        if (buf_) memcpy(nb, buf_, len_);
+        memcpy(nb + len_, s, n);
+        nb[len_ + n] = '\0';
+        free(buf_); buf_ = nb; len_ += n;
+        return *this;
+    }
+    void push_back(char c) { append(&c, 1); }
+    void pop_back() { if (len_ > 0) { --len_; if (buf_) buf_[len_] = '\0'; } }
+    char back() const { return (len_ > 0 && buf_) ? buf_[len_ - 1] : '\0'; }
+    char front() const { return (len_ > 0 && buf_) ? buf_[0] : '\0'; }
+
+    string &operator+=(const string &o) { return append(o); }
+    string &operator+=(const char   *s) { return append(s); }
+    string &operator+=(char          c) { push_back(c); return *this; }
+
+    /* --- Concatenation --- */
+
+    string operator+(const string &o) const {
+        string r(*this); r.append(o); return r;
+    }
+    string operator+(const char *s) const {
+        string r(*this); r.append(s); return r;
+    }
+
+    /* --- Search --- */
+
+    size_t find(char c, size_t from = 0) const {
+        for (size_t i = from; i < len_; ++i)
+            if (buf_[i] == c) return i;
+        return npos;
+    }
+    size_t find(const string &s, size_t from = 0) const {
+        return find(s.c_str(), from);
+    }
+    size_t find(const char *s, size_t from = 0) const {
+        if (!s || !buf_) return npos;
+        const char *p = strstr(buf_ + (from < len_ ? from : len_), s);
+        return p ? (size_t)(p - buf_) : npos;
+    }
+    size_t rfind(char c) const {
+        for (size_t i = len_; i-- > 0; )
+            if (buf_[i] == c) return i;
+        return npos;
+    }
+    size_t rfind(const string &s) const {
+        if (s.empty()) return len_;
+        for (size_t i = len_ - s.len_; i != npos; --i) {
+            if (memcmp(buf_ + i, s.buf_, s.len_) == 0) return i;
+            if (i == 0) break;
+        }
+        return npos;
+    }
+    size_t find_first_not_of(const char *chars, size_t from = 0) const {
+        for (size_t i = from; i < len_; ++i)
+            if (!strchr(chars, buf_[i])) return i;
+        return npos;
+    }
+    size_t find_last_not_of(const char *chars) const {
+        for (size_t i = len_; i-- > 0; )
+            if (!strchr(chars, buf_[i])) return i;
+        return npos;
+    }
+
+    /* --- Substr / erase / replace --- */
+
+    string substr(size_t pos = 0, size_t n = npos) const {
+        if (pos > len_) return string();
+        size_t sz = (n == npos || pos + n > len_) ? (len_ - pos) : n;
+        return string(buf_ + pos, sz);
+    }
+    string &erase(size_t pos = 0, size_t n = npos) {
+        if (pos >= len_) return *this;
+        size_t sz = (n == npos || pos + n > len_) ? (len_ - pos) : n;
+        memmove(buf_ + pos, buf_ + pos + sz, len_ - pos - sz + 1);
+        len_ -= sz;
+        return *this;
+    }
+    string &replace(size_t pos, size_t n, const string &s) {
+        erase(pos, n);
+        char *nb = (char*)malloc(len_ + s.len_ + 1);
+        if (!nb) return *this;
+        memcpy(nb, buf_, pos);
+        memcpy(nb + pos, s.buf_, s.len_);
+        memcpy(nb + pos + s.len_, buf_ + pos, len_ - pos);
+        nb[len_ + s.len_] = '\0';
+        free(buf_); buf_ = nb; len_ += s.len_;
+        return *this;
+    }
+    string &replace(char from, char to) {
+        for (size_t i = 0; i < len_; ++i)
+            if (buf_[i] == from) buf_[i] = to;
+        return *this;
+    }
+
+    /* Construct from pointer + length (also used by substr) */
+    string(const char *s, size_t n) : buf_(nullptr), len_(0) { _assign(s, n); }
+
+private:
+    char   *buf_;
+    size_t  len_;
+
+    void _assign(const char *s, size_t n) {
+        char *nb = (char*)malloc(n + 1);
+        if (!nb) return;
+        memcpy(nb, s, n);
+        nb[n] = '\0';
+        free(buf_); buf_ = nb; len_ = n;
+    }
+};
+
+/* Non-member operator+ */
+inline string operator+(const char *lhs, const string &rhs) {
+    string r(lhs ? lhs : "");
+    r.append(rhs);
+    return r;
+}
+
+/* std::to_string — picolibc doesn't provide this */
+inline string to_string(int val) { char b[16]; snprintf(b, sizeof(b), "%d", val); return string(b); }
+inline string to_string(unsigned val) { char b[16]; snprintf(b, sizeof(b), "%u", val); return string(b); }
+inline string to_string(long val) { char b[24]; snprintf(b, sizeof(b), "%ld", val); return string(b); }
+inline string to_string(unsigned long val) { char b[24]; snprintf(b, sizeof(b), "%lu", val); return string(b); }
+inline string to_string(long long val) { char b[24]; snprintf(b, sizeof(b), "%lld", val); return string(b); }
+inline string to_string(unsigned long long val) { char b[24]; snprintf(b, sizeof(b), "%llu", val); return string(b); }
+inline string to_string(float val) { char b[24]; snprintf(b, sizeof(b), "%g", (double)val); return string(b); }
+inline string to_string(double val) { char b[24]; snprintf(b, sizeof(b), "%g", val); return string(b); }
+
+/* std::isalnum / std::isdigit / std::isalpha — ctype wrappers */
+inline bool isalnum(int c) { return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'); }
+inline bool isdigit(int c) { return c >= '0' && c <= '9'; }
+inline bool isalpha(int c) { return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'); }
+inline int  tolower(int c) { return (c >= 'A' && c <= 'Z') ? c + 32 : c; }
+inline int  toupper(int c) { return (c >= 'a' && c <= 'z') ? c - 32 : c; }
+
+} // namespace std

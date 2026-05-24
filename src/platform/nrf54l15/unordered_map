@@ -1,0 +1,90 @@
+/*
+ * unordered_map — Minimal stub using sorted vector for Zephyr nRF54L15 port.
+ * NextHopRouter uses std::unordered_map for route table.
+ * We implement it as a simple linear-search vector of pairs.
+ */
+#pragma once
+
+#include "vector"
+#include "utility"
+
+namespace std {
+
+/* Minimal hash — just casts to size_t */
+template <typename T>
+struct hash {
+    size_t operator()(const T &val) const { return (size_t)val; }
+};
+
+template <typename Key, typename Value, typename Hash = hash<Key>>
+class unordered_map {
+public:
+    using value_type = pair<Key, Value>;
+    using iterator = typename vector<value_type>::iterator;
+    using const_iterator = typename vector<value_type>::const_iterator;
+
+    iterator begin() { return data_.begin(); }
+    iterator end() { return data_.end(); }
+    const_iterator begin() const { return data_.begin(); }
+    const_iterator end() const { return data_.end(); }
+
+    size_t size() const { return data_.size(); }
+    bool empty() const { return data_.empty(); }
+
+    Value &operator[](const Key &k) {
+        for (auto &p : data_)
+            if (p.first == k) return p.second;
+        data_.push_back(pair<Key, Value>(k, Value()));
+        return data_.back().second;
+    }
+
+    iterator find(const Key &k) {
+        for (auto it = data_.begin(); it != data_.end(); ++it)
+            if (it->first == k) return it;
+        return data_.end();
+    }
+
+    /* erase by key — swap with last element to avoid invalidating
+     * iterators that point to elements before the erased position.
+     * This is critical for doRetransmissions() which pre-computes nextIt. */
+    size_t erase(const Key &k) {
+        for (size_t i = 0; i < data_.size(); ++i) {
+            if (data_[i].first == k) {
+                if (i + 1 < data_.size()) {
+                    /* Swap with last element instead of shifting */
+                    data_[i] = static_cast<value_type&&>(data_.back());
+                }
+                data_.pop_back();
+                return 1;
+            }
+        }
+        return 0;
+    }
+
+    /* erase by iterator — returns iterator to next element */
+    iterator erase(iterator pos) {
+        return data_.erase(pos);
+    }
+
+    void clear() { data_.clear(); }
+
+    template <typename... Args>
+    pair<iterator, bool> emplace(Args&&... args) {
+        value_type v(static_cast<Args&&>(args)...);
+        for (auto it = data_.begin(); it != data_.end(); ++it)
+            if (it->first == v.first) return pair<iterator, bool>(it, false);
+        data_.push_back(static_cast<value_type&&>(v));
+        return pair<iterator, bool>(data_.end() - 1, true);
+    }
+
+    size_t count(const Key &k) const {
+        for (const auto &p : data_)
+            if (p.first == k) return 1;
+        return 0;
+    }
+
+private:
+    vector<value_type> data_;
+};
+
+} // namespace std

@@ -1,0 +1,846 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Rebot 6.1 (Python 3.12.10 on linux)" generated="20260326 07:59:53.331" rpa="false" schemaversion="4">
+<suite id="s1" name="Test Suite" source="/home/me/meshtastic-nrf54l15/tests/tier1/test_broadcast_flooding.robot">
+<kw name="Setup" library="renode-keywords" type="SETUP">
+<msg timestamp="20260326 07:59:38.541" level="TRACE">Arguments: [  ]</msg>
+<kw name="Evaluate" library="BuiltIn">
+<var>${SYSTEM}</var>
+<arg>platform.system()</arg>
+<arg>modules=platform</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<msg timestamp="20260326 07:59:38.541" level="TRACE">Arguments: [ 'platform.system()' | modules='platform' ]</msg>
+<msg timestamp="20260326 07:59:38.541" level="TRACE">Return: 'Linux'</msg>
+<msg timestamp="20260326 07:59:38.541" level="INFO">${SYSTEM} = Linux</msg>
+<status status="PASS" starttime="20260326 07:59:38.541" endtime="20260326 07:59:38.541"/>
+</kw>
+<kw name="Set Variable If" library="BuiltIn">
+<var>${CONFIGURATION}</var>
+<arg>not ${SKIP_RUNNING_SERVER} and ${SERVER_REMOTE_DEBUG}</arg>
+<arg>Debug</arg>
+<arg>${CONFIGURATION}</arg>
+<doc>Sets variable based on the given condition.</doc>
+<msg timestamp="20260326 07:59:38.542" level="TRACE">Arguments: [ 'not True and False' | 'Debug' | '${CONFIGURATION}' ]</msg>
+<msg timestamp="20260326 07:59:38.542" level="TRACE">Return: 'Release'</msg>
+<msg timestamp="20260326 07:59:38.542" level="INFO">${CONFIGURATION} = Release</msg>
+<status status="PASS" starttime="20260326 07:59:38.541" endtime="20260326 07:59:38.542"/>
+</kw>
+<kw name="Create List" library="BuiltIn">
+<var>@{PARAMS}</var>
+<arg>--robot-server-port</arg>
+<arg>${PORT_NUMBER}</arg>
+<arg>--hide-log</arg>
+<doc>Returns a list containing given items.</doc>
+<msg timestamp="20260326 07:59:38.542" level="TRACE">Arguments: [ '--robot-server-port' | '49153' | '--hide-log' ]</msg>
+<msg timestamp="20260326 07:59:38.542" level="TRACE">Return: ['--robot-server-port', '49153', '--hide-log']</msg>
+<msg timestamp="20260326 07:59:38.542" level="INFO">@{PARAMS} = [ --robot-server-port | 49153 | --hide-log ]</msg>
+<status status="PASS" starttime="20260326 07:59:38.542" endtime="20260326 07:59:38.542"/>
+</kw>
+<if>
+<branch type="IF" condition="${DISABLE_GUI}">
+<kw name="Insert Into List" library="Collections">
+<arg>${PARAMS}</arg>
+<arg>0</arg>
+<arg>--disable-gui</arg>
+<doc>Inserts ``value`` into ``list`` to the position specified with ``index``.</doc>
+<status status="NOT RUN" starttime="20260326 07:59:38.542" endtime="20260326 07:59:38.542"/>
+</kw>
+<status status="NOT RUN" starttime="20260326 07:59:38.542" endtime="20260326 07:59:38.542"/>
+</branch>
+<status status="PASS" starttime="20260326 07:59:38.542" endtime="20260326 07:59:38.542"/>
+</if>
+<if>
+<branch type="IF" condition="not ${SKIP_RUNNING_SERVER}">
+<kw name="File Should Exist" library="OperatingSystem">
+<arg>${DIRECTORY}/${BINARY_NAME}</arg>
+<arg>msg=Robot Framework remote server binary not found (${DIRECTORY}/${BINARY_NAME}). Did you forget to build it in ${CONFIGURATION} configuration?</arg>
+<doc>Fails unless the given ``path`` points to an existing file.</doc>
+<status status="NOT RUN" starttime="20260326 07:59:38.542" endtime="20260326 07:59:38.542"/>
+</kw>
+<status status="NOT RUN" starttime="20260326 07:59:38.542" endtime="20260326 07:59:38.543"/>
+</branch>
+<status status="PASS" starttime="20260326 07:59:38.542" endtime="20260326 07:59:38.543"/>
+</if>
+<if>
+<branch type="IF" condition="not ${SKIP_RUNNING_SERVER} and not ${SERVER_REMOTE_DEBUG} and not '${SYSTEM}' == 'Windows' and not ${NET_PLATFORM}">
+<kw name="Start Process" library="Process">
+<arg>mono</arg>
+<arg>${BINARY_NAME}</arg>
+<arg>@{PARAMS}</arg>
+<arg>cwd=${DIRECTORY}</arg>
+<doc>Starts a new process on background.</doc>
+<status status="NOT RUN" starttime="20260326 07:59:38.543" endtime="20260326 07:59:38.543"/>
+</kw>
+<status status="NOT RUN" starttime="20260326 07:59:38.543" endtime="20260326 07:59:38.543"/>
+</branch>
+<status status="PASS" starttime="20260326 07:59:38.543" endtime="20260326 07:59:38.543"/>
+</if>
+<if>
+<branch type="IF" condition="not ${SKIP_RUNNING_SERVER} and not ${SERVER_REMOTE_DEBUG} and '${SYSTEM}' == 'Windows'">
+<kw name="Start Process" library="Process">
+<arg>${BINARY_NAME}</arg>
+<arg>@{PARAMS}</arg>
+<arg>cwd=${DIRECTORY}</arg>
+<arg>shell=true</arg>
+<doc>Starts a new process on background.</doc>
+<status status="NOT RUN" starttime="20260326 07:59:38.543" endtime="20260326 07:59:38.543"/>
+</kw>
+<status status="NOT RUN" starttime="20260326 07:59:38.543" endtime="20260326 07:59:38.543"/>
+</branch>
+<status status="PASS" starttime="20260326 07:59:38.543" endtime="20260326 07:59:38.543"/>
+</if>
+<if>
+<branch type="IF" condition="not ${SKIP_RUNNING_SERVER} and not ${SERVER_REMOTE_DEBUG} and ${NET_PLATFORM}">
+<kw name="Start Process" library="Process">
+<arg>dotnet ${BINARY_NAME}</arg>
+<arg>@{PARAMS}</arg>
+<arg>cwd=${DIRECTORY}</arg>
+<arg>shell=true</arg>
+<doc>Starts a new process on background.</doc>
+<status status="NOT RUN" starttime="20260326 07:59:38.543" endtime="20260326 07:59:38.543"/>
+</kw>
+<status status="NOT RUN" starttime="20260326 07:59:38.543" endtime="20260326 07:59:38.543"/>
+</branch>
+<status status="PASS" starttime="20260326 07:59:38.543" endtime="20260326 07:59:38.543"/>
+</if>
+<if>
+<branch type="IF" condition="not ${SKIP_RUNNING_SERVER} and ${SERVER_REMOTE_DEBUG} and not '${SYSTEM}' == 'Windows' and not ${NET_PLATFORM}">
+<kw name="Start Process" library="Process">
+<arg>mono</arg>
+<arg>--debug</arg>
+<arg>--debugger-agent\=transport\=dt_socket,address\=0.0.0.0:${SERVER_REMOTE_PORT},server\=y,suspend\=${SERVER_REMOTE_SUSPEND}</arg>
+<arg>${BINARY_NAME}</arg>
+<arg>@{PARAMS}</arg>
+<arg>cwd=${DIRECTORY}</arg>
+<doc>Starts a new process on background.</doc>
+<status status="NOT RUN" starttime="20260326 07:59:38.544" endtime="20260326 07:59:38.544"/>
+</kw>
+<status status="NOT RUN" starttime="20260326 07:59:38.543" endtime="20260326 07:59:38.544"/>
+</branch>
+<status status="PASS" starttime="20260326 07:59:38.543" endtime="20260326 07:59:38.544"/>
+</if>
+<if>
+<branch type="IF" condition="not ${SKIP_RUNNING_SERVER} and ${SERVER_REMOTE_DEBUG} and '${SYSTEM}' == 'Windows'">
+<kw name="Fatal Error" library="BuiltIn">
+<arg>Windows doesn't support server remote debug option.</arg>
+<doc>Stops the whole test execution.</doc>
+<status status="NOT RUN" starttime="20260326 07:59:38.544" endtime="20260326 07:59:38.544"/>
+</kw>
+<status status="NOT RUN" starttime="20260326 07:59:38.544" endtime="20260326 07:59:38.544"/>
+</branch>
+<status status="PASS" starttime="20260326 07:59:38.544" endtime="20260326 07:59:38.544"/>
+</if>
+<if>
+<branch type="IF" condition="not '${SYSTEM}' == 'Windows'">
+<kw name="Wait Until Keyword Succeeds" library="BuiltIn">
+<arg>60s</arg>
+<arg>1s</arg>
+<arg>Import Library</arg>
+<arg>Remote</arg>
+<arg>http://127.0.0.1:${PORT_NUMBER}/</arg>
+<doc>Runs the specified keyword and retries if it fails.</doc>
+<msg timestamp="20260326 07:59:38.544" level="TRACE">Arguments: [ '60s' | '1s' | 'Import Library' | 'Remote' | 'http://127.0.0.1:${PORT_NUMBER}/' ]</msg>
+<kw name="Import Library" library="BuiltIn">
+<arg>Remote</arg>
+<arg>http://127.0.0.1:${PORT_NUMBER}/</arg>
+<doc>Imports a library with the given name and optional arguments.</doc>
+<msg timestamp="20260326 07:59:38.544" level="TRACE">Arguments: [ 'Remote' | 'http://127.0.0.1:${PORT_NUMBER}/' ]</msg>
+<msg timestamp="20260326 07:59:38.776" level="TRACE">Return: None</msg>
+<status status="PASS" starttime="20260326 07:59:38.544" endtime="20260326 07:59:38.776"/>
+</kw>
+<msg timestamp="20260326 07:59:38.776" level="TRACE">Return: None</msg>
+<status status="PASS" starttime="20260326 07:59:38.544" endtime="20260326 07:59:38.776"/>
+</kw>
+<status status="PASS" starttime="20260326 07:59:38.544" endtime="20260326 07:59:38.776"/>
+</branch>
+<status status="PASS" starttime="20260326 07:59:38.544" endtime="20260326 07:59:38.776"/>
+</if>
+<if>
+<branch type="IF" condition="'${SYSTEM}' == 'Windows'">
+<kw name="Wait Until Keyword Succeeds" library="BuiltIn">
+<arg>60s</arg>
+<arg>1s</arg>
+<arg>Import Library</arg>
+<arg>Remote</arg>
+<arg>http://localhost:${PORT_NUMBER}/</arg>
+<doc>Runs the specified keyword and retries if it fails.</doc>
+<status status="NOT RUN" starttime="20260326 07:59:38.777" endtime="20260326 07:59:38.777"/>
+</kw>
+<status status="NOT RUN" starttime="20260326 07:59:38.776" endtime="20260326 07:59:38.777"/>
+</branch>
+<status status="PASS" starttime="20260326 07:59:38.776" endtime="20260326 07:59:38.777"/>
+</if>
+<kw name="Setup Renode" library="renode-keywords">
+<msg timestamp="20260326 07:59:38.777" level="TRACE">Arguments: [  ]</msg>
+<kw name="Set Default Uart Timeout" library="Remote">
+<arg>${DEFAULT_UART_TIMEOUT}</arg>
+<msg timestamp="20260326 07:59:38.777" level="TRACE">Arguments: [ '8' ]</msg>
+<msg timestamp="20260326 07:59:38.798" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:38.777" endtime="20260326 07:59:38.799"/>
+</kw>
+<if>
+<branch type="IF" condition="${SAVE_LOGS}">
+<kw name="Enable Logging To Cache" library="Remote">
+<msg timestamp="20260326 07:59:38.799" level="TRACE">Arguments: [  ]</msg>
+<msg timestamp="20260326 07:59:38.803" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:38.799" endtime="20260326 07:59:38.803"/>
+</kw>
+<status status="PASS" starttime="20260326 07:59:38.799" endtime="20260326 07:59:38.803"/>
+</branch>
+<status status="PASS" starttime="20260326 07:59:38.799" endtime="20260326 07:59:38.803"/>
+</if>
+<kw name="Set Variable" library="BuiltIn">
+<var>${allowed_chars}</var>
+<arg>abcdefghijklmnopqrstuvwxyz01234567890_-</arg>
+<doc>Returns the given values which can then be assigned to a variables.</doc>
+<msg timestamp="20260326 07:59:38.803" level="TRACE">Arguments: [ 'abcdefghijklmnopqrstuvwxyz01234567890_-' ]</msg>
+<msg timestamp="20260326 07:59:38.803" level="TRACE">Return: 'abcdefghijklmnopqrstuvwxyz01234567890_-'</msg>
+<msg timestamp="20260326 07:59:38.803" level="INFO">${allowed_chars} = abcdefghijklmnopqrstuvwxyz01234567890_-</msg>
+<status status="PASS" starttime="20260326 07:59:38.803" endtime="20260326 07:59:38.803"/>
+</kw>
+<kw name="Convert To Lower Case" library="String">
+<var>${metrics_fname}</var>
+<arg>${SUITE_NAME}</arg>
+<doc>Converts string to lower case.</doc>
+<msg timestamp="20260326 07:59:38.803" level="TRACE">Arguments: [ 'test_broadcast_flooding' ]</msg>
+<msg timestamp="20260326 07:59:38.804" level="TRACE">Return: 'test_broadcast_flooding'</msg>
+<msg timestamp="20260326 07:59:38.804" level="INFO">${metrics_fname} = test_broadcast_flooding</msg>
+<status status="PASS" starttime="20260326 07:59:38.803" endtime="20260326 07:59:38.804"/>
+</kw>
+<kw name="Replace String" library="String">
+<var>${metrics_fname}</var>
+<arg>${metrics_fname}</arg>
+<arg>${SPACE}</arg>
+<arg>_</arg>
+<doc>Replaces ``search_for`` in the given ``string`` with ``replace_with``.</doc>
+<msg timestamp="20260326 07:59:38.804" level="TRACE">Arguments: [ 'test_broadcast_flooding' | ' ' | '_' ]</msg>
+<msg timestamp="20260326 07:59:38.804" level="TRACE">Return: 'test_broadcast_flooding'</msg>
+<msg timestamp="20260326 07:59:38.804" level="INFO">${metrics_fname} = test_broadcast_flooding</msg>
+<status status="PASS" starttime="20260326 07:59:38.804" endtime="20260326 07:59:38.804"/>
+</kw>
+<kw name="Replace String Using Regexp" library="String">
+<var>${metrics_fname}</var>
+<arg>${metrics_fname}</arg>
+<arg>[^${allowed_chars}]+</arg>
+<arg>${EMPTY}</arg>
+<doc>Replaces ``pattern`` in the given ``string`` with ``replace_with``.</doc>
+<msg timestamp="20260326 07:59:38.804" level="TRACE">Arguments: [ 'test_broadcast_flooding' | '[^abcdefghijklmnopqrstuvwxyz01234567890_-]+' | '' ]</msg>
+<msg timestamp="20260326 07:59:38.805" level="TRACE">Return: 'test_broadcast_flooding'</msg>
+<msg timestamp="20260326 07:59:38.805" level="INFO">${metrics_fname} = test_broadcast_flooding</msg>
+<status status="PASS" starttime="20260326 07:59:38.804" endtime="20260326 07:59:38.805"/>
+</kw>
+<kw name="Join Path" library="OperatingSystem">
+<var>${metrics_path}</var>
+<arg>${RESULTS_DIRECTORY}</arg>
+<arg>profiler-${metrics_fname}</arg>
+<doc>Joins the given path part(s) to the given base path.</doc>
+<msg timestamp="20260326 07:59:38.805" level="TRACE">Arguments: [ '/home/me/meshtastic-nrf54l15/' | 'profiler-test_broadcast_flooding' ]</msg>
+<msg timestamp="20260326 07:59:38.805" level="TRACE">Return: '/home/me/meshtastic-nrf54l15/profiler-test_broadcast_flooding'</msg>
+<msg timestamp="20260326 07:59:38.805" level="INFO">${metrics_path} = /home/me/meshtastic-nrf54l15/profiler-test_broadcast_flooding</msg>
+<status status="PASS" starttime="20260326 07:59:38.805" endtime="20260326 07:59:38.805"/>
+</kw>
+<if>
+<branch type="IF" condition="${CREATE_EXECUTION_METRICS}">
+<kw name="Execute Command" library="Remote">
+<arg>EnableProfilerGlobally "${metrics_path}"</arg>
+<status status="NOT RUN" starttime="20260326 07:59:38.805" endtime="20260326 07:59:38.805"/>
+</kw>
+<status status="NOT RUN" starttime="20260326 07:59:38.805" endtime="20260326 07:59:38.805"/>
+</branch>
+<status status="PASS" starttime="20260326 07:59:38.805" endtime="20260326 07:59:38.805"/>
+</if>
+<kw name="Reset Emulation" library="Remote">
+<msg timestamp="20260326 07:59:38.805" level="TRACE">Arguments: [  ]</msg>
+<msg timestamp="20260326 07:59:38.818" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:38.805" endtime="20260326 07:59:38.818"/>
+</kw>
+<msg timestamp="20260326 07:59:38.818" level="TRACE">Return: None</msg>
+<status status="PASS" starttime="20260326 07:59:38.777" endtime="20260326 07:59:38.818"/>
+</kw>
+<msg timestamp="20260326 07:59:38.818" level="TRACE">Return: None</msg>
+<status status="PASS" starttime="20260326 07:59:38.541" endtime="20260326 07:59:38.818"/>
+</kw>
+<test id="s1-t1" name="Broadcast Flooding Via Real FloodingRouter 3 Node Chain" line="6">
+<kw name="Reset Emulation" library="Remote" type="SETUP">
+<msg timestamp="20260326 07:59:38.819" level="TRACE">Arguments: [  ]</msg>
+<msg timestamp="20260326 07:59:38.821" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:38.819" endtime="20260326 07:59:38.822"/>
+</kw>
+<kw name="Load All Peripherals" library="common">
+<doc>Load all nRF54L15 peripheral models + LoRaMedium.</doc>
+<msg timestamp="20260326 07:59:38.822" level="TRACE">Arguments: [  ]</msg>
+<kw name="Execute Command" library="Remote">
+<arg>include @${RENODE_NRF54L15}/src/peripherals/NRF54L15_FICR.cs</arg>
+<msg timestamp="20260326 07:59:38.822" level="TRACE">Arguments: [ 'include @/home/me/renode-nrf54l15/src/peripherals/NRF54L15_FICR.cs' ]</msg>
+<msg timestamp="20260326 07:59:40.360" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:38.822" endtime="20260326 07:59:40.360"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>include @${RENODE_NRF54L15}/src/peripherals/NRF54L15_UICR.cs</arg>
+<msg timestamp="20260326 07:59:40.360" level="TRACE">Arguments: [ 'include @/home/me/renode-nrf54l15/src/peripherals/NRF54L15_UICR.cs' ]</msg>
+<msg timestamp="20260326 07:59:40.589" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:40.360" endtime="20260326 07:59:40.589"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>include @${RENODE_NRF54L15}/src/peripherals/NRF54L15_Clock.cs</arg>
+<msg timestamp="20260326 07:59:40.590" level="TRACE">Arguments: [ 'include @/home/me/renode-nrf54l15/src/peripherals/NRF54L15_Clock.cs' ]</msg>
+<msg timestamp="20260326 07:59:41.063" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:40.589" endtime="20260326 07:59:41.064"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>include @${RENODE_NRF54L15}/src/peripherals/NRF54L15_GPIO.cs</arg>
+<msg timestamp="20260326 07:59:41.064" level="TRACE">Arguments: [ 'include @/home/me/renode-nrf54l15/src/peripherals/NRF54L15_GPIO.cs' ]</msg>
+<msg timestamp="20260326 07:59:41.403" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:41.064" endtime="20260326 07:59:41.403"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>include @${RENODE_NRF54L15}/src/peripherals/NRF54L15_GPIOTE.cs</arg>
+<msg timestamp="20260326 07:59:41.404" level="TRACE">Arguments: [ 'include @/home/me/renode-nrf54l15/src/peripherals/NRF54L15_GPIOTE.cs' ]</msg>
+<msg timestamp="20260326 07:59:41.760" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:41.404" endtime="20260326 07:59:41.761"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>include @${RENODE_NRF54L15}/src/peripherals/NRF54L15_UARTE.cs</arg>
+<msg timestamp="20260326 07:59:41.761" level="TRACE">Arguments: [ 'include @/home/me/renode-nrf54l15/src/peripherals/NRF54L15_UARTE.cs' ]</msg>
+<msg timestamp="20260326 07:59:42.125" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:41.761" endtime="20260326 07:59:42.126"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>include @${RENODE_NRF54L15}/src/peripherals/NRF54L15_SPIM.cs</arg>
+<msg timestamp="20260326 07:59:42.126" level="TRACE">Arguments: [ 'include @/home/me/renode-nrf54l15/src/peripherals/NRF54L15_SPIM.cs' ]</msg>
+<msg timestamp="20260326 07:59:42.458" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:42.126" endtime="20260326 07:59:42.458"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>include @${RENODE_NRF54L15}/src/peripherals/NRF54L15_TIMER.cs</arg>
+<msg timestamp="20260326 07:59:42.458" level="TRACE">Arguments: [ 'include @/home/me/renode-nrf54l15/src/peripherals/NRF54L15_TIMER.cs' ]</msg>
+<msg timestamp="20260326 07:59:42.766" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:42.458" endtime="20260326 07:59:42.766"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>include @${RENODE_NRF54L15}/src/peripherals/NRF54L15_GRTC.cs</arg>
+<msg timestamp="20260326 07:59:42.767" level="TRACE">Arguments: [ 'include @/home/me/renode-nrf54l15/src/peripherals/NRF54L15_GRTC.cs' ]</msg>
+<msg timestamp="20260326 07:59:43.061" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:42.766" endtime="20260326 07:59:43.061"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>include @${RENODE_NRF54L15}/src/peripherals/NRF54L15_CRACEN.cs</arg>
+<msg timestamp="20260326 07:59:43.061" level="TRACE">Arguments: [ 'include @/home/me/renode-nrf54l15/src/peripherals/NRF54L15_CRACEN.cs' ]</msg>
+<msg timestamp="20260326 07:59:43.342" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:43.061" endtime="20260326 07:59:43.342"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>include @${RENODE_NRF54L15}/src/peripherals/NRF54L15_CRACENCORE.cs</arg>
+<msg timestamp="20260326 07:59:43.342" level="TRACE">Arguments: [ 'include @/home/me/renode-nrf54l15/src/peripherals/NRF54L15_CRACENCORE.cs' ]</msg>
+<msg timestamp="20260326 07:59:43.584" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:43.342" endtime="20260326 07:59:43.584"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>include @${RENODE_NRF54L15}/src/peripherals/NRF54L15_DPPIC.cs</arg>
+<msg timestamp="20260326 07:59:43.585" level="TRACE">Arguments: [ 'include @/home/me/renode-nrf54l15/src/peripherals/NRF54L15_DPPIC.cs' ]</msg>
+<msg timestamp="20260326 07:59:43.748" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:43.585" endtime="20260326 07:59:43.748"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>include @${RENODE_NRF54L15}/src/peripherals/NRF54L15_MPC.cs</arg>
+<msg timestamp="20260326 07:59:43.748" level="TRACE">Arguments: [ 'include @/home/me/renode-nrf54l15/src/peripherals/NRF54L15_MPC.cs' ]</msg>
+<msg timestamp="20260326 07:59:43.926" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:43.748" endtime="20260326 07:59:43.926"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>include @${RENODE_NRF54L15}/src/peripherals/NRF54L15_NFCT.cs</arg>
+<msg timestamp="20260326 07:59:43.927" level="TRACE">Arguments: [ 'include @/home/me/renode-nrf54l15/src/peripherals/NRF54L15_NFCT.cs' ]</msg>
+<msg timestamp="20260326 07:59:44.183" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:43.926" endtime="20260326 07:59:44.183"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>include @${RENODE_NRF54L15}/src/peripherals/NRF54L15_PDM.cs</arg>
+<msg timestamp="20260326 07:59:44.183" level="TRACE">Arguments: [ 'include @/home/me/renode-nrf54l15/src/peripherals/NRF54L15_PDM.cs' ]</msg>
+<msg timestamp="20260326 07:59:44.497" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:44.183" endtime="20260326 07:59:44.497"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>include @${RENODE_NRF54L15}/src/peripherals/NRF54L15_PPIB.cs</arg>
+<msg timestamp="20260326 07:59:44.497" level="TRACE">Arguments: [ 'include @/home/me/renode-nrf54l15/src/peripherals/NRF54L15_PPIB.cs' ]</msg>
+<msg timestamp="20260326 07:59:44.764" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:44.497" endtime="20260326 07:59:44.765"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>include @${RENODE_NRF54L15}/src/peripherals/NRF54L15_PWM.cs</arg>
+<msg timestamp="20260326 07:59:44.765" level="TRACE">Arguments: [ 'include @/home/me/renode-nrf54l15/src/peripherals/NRF54L15_PWM.cs' ]</msg>
+<msg timestamp="20260326 07:59:45.124" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:44.765" endtime="20260326 07:59:45.124"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>include @${RENODE_NRF54L15}/src/peripherals/NRF54L15_QDEC.cs</arg>
+<msg timestamp="20260326 07:59:45.125" level="TRACE">Arguments: [ 'include @/home/me/renode-nrf54l15/src/peripherals/NRF54L15_QDEC.cs' ]</msg>
+<msg timestamp="20260326 07:59:45.404" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:45.125" endtime="20260326 07:59:45.404"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>include @${RENODE_NRF54L15}/src/peripherals/NRF54L15_RADIO.cs</arg>
+<msg timestamp="20260326 07:59:45.404" level="TRACE">Arguments: [ 'include @/home/me/renode-nrf54l15/src/peripherals/NRF54L15_RADIO.cs' ]</msg>
+<msg timestamp="20260326 07:59:45.681" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:45.404" endtime="20260326 07:59:45.681"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>include @${RENODE_NRF54L15}/src/peripherals/NRF54L15_REGULATORS.cs</arg>
+<msg timestamp="20260326 07:59:45.682" level="TRACE">Arguments: [ 'include @/home/me/renode-nrf54l15/src/peripherals/NRF54L15_REGULATORS.cs' ]</msg>
+<msg timestamp="20260326 07:59:45.834" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:45.682" endtime="20260326 07:59:45.834"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>include @${RENODE_NRF54L15}/src/peripherals/NRF54L15_ResetCtrl.cs</arg>
+<msg timestamp="20260326 07:59:45.834" level="TRACE">Arguments: [ 'include @/home/me/renode-nrf54l15/src/peripherals/NRF54L15_ResetCtrl.cs' ]</msg>
+<msg timestamp="20260326 07:59:45.980" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:45.834" endtime="20260326 07:59:45.980"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>include @${RENODE_NRF54L15}/src/peripherals/NRF54L15_RRAMC.cs</arg>
+<msg timestamp="20260326 07:59:45.981" level="TRACE">Arguments: [ 'include @/home/me/renode-nrf54l15/src/peripherals/NRF54L15_RRAMC.cs' ]</msg>
+<msg timestamp="20260326 07:59:46.168" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:45.980" endtime="20260326 07:59:46.168"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>include @${RENODE_NRF54L15}/src/peripherals/NRF54L15_SAADC.cs</arg>
+<msg timestamp="20260326 07:59:46.169" level="TRACE">Arguments: [ 'include @/home/me/renode-nrf54l15/src/peripherals/NRF54L15_SAADC.cs' ]</msg>
+<msg timestamp="20260326 07:59:46.378" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:46.169" endtime="20260326 07:59:46.378"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>include @${RENODE_NRF54L15}/src/peripherals/NRF54L15_TAMPC.cs</arg>
+<msg timestamp="20260326 07:59:46.379" level="TRACE">Arguments: [ 'include @/home/me/renode-nrf54l15/src/peripherals/NRF54L15_TAMPC.cs' ]</msg>
+<msg timestamp="20260326 07:59:46.545" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:46.378" endtime="20260326 07:59:46.546"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>include @${RENODE_NRF54L15}/src/peripherals/NRF54L15_TEMP.cs</arg>
+<msg timestamp="20260326 07:59:46.546" level="TRACE">Arguments: [ 'include @/home/me/renode-nrf54l15/src/peripherals/NRF54L15_TEMP.cs' ]</msg>
+<msg timestamp="20260326 07:59:46.740" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:46.546" endtime="20260326 07:59:46.740"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>include @${RENODE_NRF54L15}/src/peripherals/NRF54L15_TWIM.cs</arg>
+<msg timestamp="20260326 07:59:46.740" level="TRACE">Arguments: [ 'include @/home/me/renode-nrf54l15/src/peripherals/NRF54L15_TWIM.cs' ]</msg>
+<msg timestamp="20260326 07:59:46.955" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:46.740" endtime="20260326 07:59:46.955"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>include @${RENODE_NRF54L15}/src/peripherals/NRF54L15_VPR.cs</arg>
+<msg timestamp="20260326 07:59:46.956" level="TRACE">Arguments: [ 'include @/home/me/renode-nrf54l15/src/peripherals/NRF54L15_VPR.cs' ]</msg>
+<msg timestamp="20260326 07:59:47.206" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:46.955" endtime="20260326 07:59:47.206"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>include @${RENODE_NRF54L15}/src/peripherals/NRF54L15_WDT.cs</arg>
+<msg timestamp="20260326 07:59:47.210" level="TRACE">Arguments: [ 'include @/home/me/renode-nrf54l15/src/peripherals/NRF54L15_WDT.cs' ]</msg>
+<msg timestamp="20260326 07:59:47.533" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:47.210" endtime="20260326 07:59:47.533"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>include @${RENODE_NRF54L15}/src/peripherals/NRF54L15_I2S.cs</arg>
+<msg timestamp="20260326 07:59:47.533" level="TRACE">Arguments: [ 'include @/home/me/renode-nrf54l15/src/peripherals/NRF54L15_I2S.cs' ]</msg>
+<msg timestamp="20260326 07:59:47.854" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:47.533" endtime="20260326 07:59:47.855"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>include @${RENODE_NRF54L15}/src/peripherals/I2CEchoDevice.cs</arg>
+<msg timestamp="20260326 07:59:47.855" level="TRACE">Arguments: [ 'include @/home/me/renode-nrf54l15/src/peripherals/I2CEchoDevice.cs' ]</msg>
+<msg timestamp="20260326 07:59:48.052" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:47.855" endtime="20260326 07:59:48.052"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>include @${RENODE_NRF54L15}/src/peripherals/SPIEchoDevice.cs</arg>
+<msg timestamp="20260326 07:59:48.053" level="TRACE">Arguments: [ 'include @/home/me/renode-nrf54l15/src/peripherals/SPIEchoDevice.cs' ]</msg>
+<msg timestamp="20260326 07:59:48.196" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:48.053" endtime="20260326 07:59:48.196"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>include @${RENODE_NRF54L15}/src/peripherals/Semtech_LR2021.cs</arg>
+<msg timestamp="20260326 07:59:48.196" level="TRACE">Arguments: [ 'include @/home/me/renode-nrf54l15/src/peripherals/Semtech_LR2021.cs' ]</msg>
+<msg timestamp="20260326 07:59:48.723" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:48.196" endtime="20260326 07:59:48.723"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>include @${RENODE_NRF54L15}/src/peripherals/LoRaMedium.cs</arg>
+<msg timestamp="20260326 07:59:48.724" level="TRACE">Arguments: [ 'include @/home/me/renode-nrf54l15/src/peripherals/LoRaMedium.cs' ]</msg>
+<msg timestamp="20260326 07:59:48.924" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:48.723" endtime="20260326 07:59:48.924"/>
+</kw>
+<msg timestamp="20260326 07:59:48.924" level="TRACE">Return: None</msg>
+<status status="PASS" starttime="20260326 07:59:38.822" endtime="20260326 07:59:48.924"/>
+</kw>
+<kw name="Setup LoRa Medium" library="common">
+<arg>range=7</arg>
+<doc>Create a LoRaMedium with optional range.</doc>
+<msg timestamp="20260326 07:59:48.924" level="TRACE">Arguments: [ ${range}='7' ]</msg>
+<kw name="Execute Command" library="Remote">
+<arg>emulation CreateLoRaMedium "lora_air"</arg>
+<msg timestamp="20260326 07:59:48.925" level="TRACE">Arguments: [ 'emulation CreateLoRaMedium "lora_air"' ]</msg>
+<msg timestamp="20260326 07:59:49.131" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:48.924" endtime="20260326 07:59:49.131"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>lora_air SetRange ${range}</arg>
+<msg timestamp="20260326 07:59:49.132" level="TRACE">Arguments: [ 'lora_air SetRange 7' ]</msg>
+<msg timestamp="20260326 07:59:49.170" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:49.131" endtime="20260326 07:59:49.171"/>
+</kw>
+<msg timestamp="20260326 07:59:49.171" level="TRACE">Return: None</msg>
+<status status="PASS" starttime="20260326 07:59:48.924" endtime="20260326 07:59:49.171"/>
+</kw>
+<kw name="Create Mesh Node" library="common">
+<arg>nodeA</arg>
+<doc>Create a named xiao_nrf54l15 machine.</doc>
+<msg timestamp="20260326 07:59:49.171" level="TRACE">Arguments: [ ${name}='nodeA' ]</msg>
+<kw name="Execute Command" library="Remote">
+<arg>mach create "${name}"</arg>
+<msg timestamp="20260326 07:59:49.171" level="TRACE">Arguments: [ 'mach create "nodeA"' ]</msg>
+<msg timestamp="20260326 07:59:49.196" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:49.171" endtime="20260326 07:59:49.196"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>machine LoadPlatformDescription @${RENODE_NRF54L15}/src/platform/xiao_nrf54l15.repl</arg>
+<msg timestamp="20260326 07:59:49.197" level="TRACE">Arguments: [ 'machine LoadPlatformDescription @/home/me/renode-nrf54l15/src/platform/xiao_nrf54l15.repl' ]</msg>
+<msg timestamp="20260326 07:59:49.792" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:49.197" endtime="20260326 07:59:49.792"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>sysbus.gpiote30 AttachGPIO sysbus.gpio0</arg>
+<msg timestamp="20260326 07:59:49.793" level="TRACE">Arguments: [ 'sysbus.gpiote30 AttachGPIO sysbus.gpio0' ]</msg>
+<msg timestamp="20260326 07:59:49.824" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:49.792" endtime="20260326 07:59:49.824"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>sysbus.gpiote20 AttachGPIO sysbus.gpio1</arg>
+<msg timestamp="20260326 07:59:49.824" level="TRACE">Arguments: [ 'sysbus.gpiote20 AttachGPIO sysbus.gpio1' ]</msg>
+<msg timestamp="20260326 07:59:49.827" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:49.824" endtime="20260326 07:59:49.827"/>
+</kw>
+<msg timestamp="20260326 07:59:49.827" level="TRACE">Return: None</msg>
+<status status="PASS" starttime="20260326 07:59:49.171" endtime="20260326 07:59:49.827"/>
+</kw>
+<kw name="Create Mesh Node" library="common">
+<arg>nodeB</arg>
+<doc>Create a named xiao_nrf54l15 machine.</doc>
+<msg timestamp="20260326 07:59:49.827" level="TRACE">Arguments: [ ${name}='nodeB' ]</msg>
+<kw name="Execute Command" library="Remote">
+<arg>mach create "${name}"</arg>
+<msg timestamp="20260326 07:59:49.828" level="TRACE">Arguments: [ 'mach create "nodeB"' ]</msg>
+<msg timestamp="20260326 07:59:49.830" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:49.828" endtime="20260326 07:59:49.830"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>machine LoadPlatformDescription @${RENODE_NRF54L15}/src/platform/xiao_nrf54l15.repl</arg>
+<msg timestamp="20260326 07:59:49.830" level="TRACE">Arguments: [ 'machine LoadPlatformDescription @/home/me/renode-nrf54l15/src/platform/xiao_nrf54l15.repl' ]</msg>
+<msg timestamp="20260326 07:59:49.954" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:49.830" endtime="20260326 07:59:49.954"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>sysbus.gpiote30 AttachGPIO sysbus.gpio0</arg>
+<msg timestamp="20260326 07:59:49.954" level="TRACE">Arguments: [ 'sysbus.gpiote30 AttachGPIO sysbus.gpio0' ]</msg>
+<msg timestamp="20260326 07:59:49.958" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:49.954" endtime="20260326 07:59:49.958"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>sysbus.gpiote20 AttachGPIO sysbus.gpio1</arg>
+<msg timestamp="20260326 07:59:49.958" level="TRACE">Arguments: [ 'sysbus.gpiote20 AttachGPIO sysbus.gpio1' ]</msg>
+<msg timestamp="20260326 07:59:49.960" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:49.958" endtime="20260326 07:59:49.960"/>
+</kw>
+<msg timestamp="20260326 07:59:49.960" level="TRACE">Return: None</msg>
+<status status="PASS" starttime="20260326 07:59:49.827" endtime="20260326 07:59:49.960"/>
+</kw>
+<kw name="Create Mesh Node" library="common">
+<arg>nodeC</arg>
+<doc>Create a named xiao_nrf54l15 machine.</doc>
+<msg timestamp="20260326 07:59:49.960" level="TRACE">Arguments: [ ${name}='nodeC' ]</msg>
+<kw name="Execute Command" library="Remote">
+<arg>mach create "${name}"</arg>
+<msg timestamp="20260326 07:59:49.960" level="TRACE">Arguments: [ 'mach create "nodeC"' ]</msg>
+<msg timestamp="20260326 07:59:49.963" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:49.960" endtime="20260326 07:59:49.963"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>machine LoadPlatformDescription @${RENODE_NRF54L15}/src/platform/xiao_nrf54l15.repl</arg>
+<msg timestamp="20260326 07:59:49.963" level="TRACE">Arguments: [ 'machine LoadPlatformDescription @/home/me/renode-nrf54l15/src/platform/xiao_nrf54l15.repl' ]</msg>
+<msg timestamp="20260326 07:59:50.082" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:49.963" endtime="20260326 07:59:50.082"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>sysbus.gpiote30 AttachGPIO sysbus.gpio0</arg>
+<msg timestamp="20260326 07:59:50.083" level="TRACE">Arguments: [ 'sysbus.gpiote30 AttachGPIO sysbus.gpio0' ]</msg>
+<msg timestamp="20260326 07:59:50.086" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:50.083" endtime="20260326 07:59:50.086"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>sysbus.gpiote20 AttachGPIO sysbus.gpio1</arg>
+<msg timestamp="20260326 07:59:50.086" level="TRACE">Arguments: [ 'sysbus.gpiote20 AttachGPIO sysbus.gpio1' ]</msg>
+<msg timestamp="20260326 07:59:50.089" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:50.086" endtime="20260326 07:59:50.089"/>
+</kw>
+<msg timestamp="20260326 07:59:50.089" level="TRACE">Return: None</msg>
+<status status="PASS" starttime="20260326 07:59:49.960" endtime="20260326 07:59:50.089"/>
+</kw>
+<kw name="Connect Node To LoRa" library="common">
+<arg>nodeA</arg>
+<arg>0</arg>
+<doc>Connect a node's LR2021 to LoRaMedium at position (x,y,z).</doc>
+<msg timestamp="20260326 07:59:50.090" level="TRACE">Arguments: [ ${name}='nodeA' | ${x}='0' | ${y}='0' | ${z}='0' ]</msg>
+<kw name="Execute Command" library="Remote">
+<arg>mach set "${name}"</arg>
+<msg timestamp="20260326 07:59:50.093" level="TRACE">Arguments: [ 'mach set "nodeA"' ]</msg>
+<msg timestamp="20260326 07:59:50.098" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:50.090" endtime="20260326 07:59:50.098"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>connector Connect sysbus.lr2021 lora_air</arg>
+<msg timestamp="20260326 07:59:50.098" level="TRACE">Arguments: [ 'connector Connect sysbus.lr2021 lora_air' ]</msg>
+<msg timestamp="20260326 07:59:50.105" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:50.098" endtime="20260326 07:59:50.105"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>lora_air SetPosition sysbus.lr2021 ${x} ${y} ${z}</arg>
+<msg timestamp="20260326 07:59:50.105" level="TRACE">Arguments: [ 'lora_air SetPosition sysbus.lr2021 0 0 0' ]</msg>
+<msg timestamp="20260326 07:59:50.109" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:50.105" endtime="20260326 07:59:50.109"/>
+</kw>
+<msg timestamp="20260326 07:59:50.109" level="TRACE">Return: None</msg>
+<status status="PASS" starttime="20260326 07:59:50.089" endtime="20260326 07:59:50.109"/>
+</kw>
+<kw name="Connect Node To LoRa" library="common">
+<arg>nodeB</arg>
+<arg>5</arg>
+<doc>Connect a node's LR2021 to LoRaMedium at position (x,y,z).</doc>
+<msg timestamp="20260326 07:59:50.110" level="TRACE">Arguments: [ ${name}='nodeB' | ${x}='5' | ${y}='0' | ${z}='0' ]</msg>
+<kw name="Execute Command" library="Remote">
+<arg>mach set "${name}"</arg>
+<msg timestamp="20260326 07:59:50.110" level="TRACE">Arguments: [ 'mach set "nodeB"' ]</msg>
+<msg timestamp="20260326 07:59:50.111" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:50.110" endtime="20260326 07:59:50.111"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>connector Connect sysbus.lr2021 lora_air</arg>
+<msg timestamp="20260326 07:59:50.111" level="TRACE">Arguments: [ 'connector Connect sysbus.lr2021 lora_air' ]</msg>
+<msg timestamp="20260326 07:59:50.112" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:50.111" endtime="20260326 07:59:50.112"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>lora_air SetPosition sysbus.lr2021 ${x} ${y} ${z}</arg>
+<msg timestamp="20260326 07:59:50.112" level="TRACE">Arguments: [ 'lora_air SetPosition sysbus.lr2021 5 0 0' ]</msg>
+<msg timestamp="20260326 07:59:50.114" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:50.112" endtime="20260326 07:59:50.114"/>
+</kw>
+<msg timestamp="20260326 07:59:50.114" level="TRACE">Return: None</msg>
+<status status="PASS" starttime="20260326 07:59:50.109" endtime="20260326 07:59:50.114"/>
+</kw>
+<kw name="Connect Node To LoRa" library="common">
+<arg>nodeC</arg>
+<arg>10</arg>
+<doc>Connect a node's LR2021 to LoRaMedium at position (x,y,z).</doc>
+<msg timestamp="20260326 07:59:50.114" level="TRACE">Arguments: [ ${name}='nodeC' | ${x}='10' | ${y}='0' | ${z}='0' ]</msg>
+<kw name="Execute Command" library="Remote">
+<arg>mach set "${name}"</arg>
+<msg timestamp="20260326 07:59:50.115" level="TRACE">Arguments: [ 'mach set "nodeC"' ]</msg>
+<msg timestamp="20260326 07:59:50.116" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:50.115" endtime="20260326 07:59:50.116"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>connector Connect sysbus.lr2021 lora_air</arg>
+<msg timestamp="20260326 07:59:50.116" level="TRACE">Arguments: [ 'connector Connect sysbus.lr2021 lora_air' ]</msg>
+<msg timestamp="20260326 07:59:50.117" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:50.116" endtime="20260326 07:59:50.117"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>lora_air SetPosition sysbus.lr2021 ${x} ${y} ${z}</arg>
+<msg timestamp="20260326 07:59:50.117" level="TRACE">Arguments: [ 'lora_air SetPosition sysbus.lr2021 10 0 0' ]</msg>
+<msg timestamp="20260326 07:59:50.118" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:50.117" endtime="20260326 07:59:50.118"/>
+</kw>
+<msg timestamp="20260326 07:59:50.118" level="TRACE">Return: None</msg>
+<status status="PASS" starttime="20260326 07:59:50.114" endtime="20260326 07:59:50.118"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>mach set "nodeA"</arg>
+<msg timestamp="20260326 07:59:50.118" level="TRACE">Arguments: [ 'mach set "nodeA"' ]</msg>
+<msg timestamp="20260326 07:59:50.119" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:50.118" endtime="20260326 07:59:50.119"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>sysbus LoadELF @${ELF_TX}</arg>
+<msg timestamp="20260326 07:59:50.119" level="TRACE">Arguments: [ 'sysbus LoadELF @/home/me/meshtastic-nrf54l15/tests/tier1/../../zephyr/build_e2e_tx/zephyr/zephyr.elf' ]</msg>
+<msg timestamp="20260326 07:59:50.484" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:50.119" endtime="20260326 07:59:50.484"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>mach set "nodeB"</arg>
+<msg timestamp="20260326 07:59:50.485" level="TRACE">Arguments: [ 'mach set "nodeB"' ]</msg>
+<msg timestamp="20260326 07:59:50.487" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:50.484" endtime="20260326 07:59:50.487"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>sysbus LoadELF @${ELF_N2}</arg>
+<msg timestamp="20260326 07:59:50.487" level="TRACE">Arguments: [ 'sysbus LoadELF @/home/me/meshtastic-nrf54l15/tests/tier1/../../zephyr/build_tier1_n2/zephyr/zephyr.elf' ]</msg>
+<msg timestamp="20260326 07:59:50.583" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:50.487" endtime="20260326 07:59:50.583"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>mach set "nodeC"</arg>
+<msg timestamp="20260326 07:59:50.584" level="TRACE">Arguments: [ 'mach set "nodeC"' ]</msg>
+<msg timestamp="20260326 07:59:50.586" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:50.583" endtime="20260326 07:59:50.586"/>
+</kw>
+<kw name="Execute Command" library="Remote">
+<arg>sysbus LoadELF @${ELF_N3}</arg>
+<msg timestamp="20260326 07:59:50.586" level="TRACE">Arguments: [ 'sysbus LoadELF @/home/me/meshtastic-nrf54l15/tests/tier1/../../zephyr/build_tier1_n3/zephyr/zephyr.elf' ]</msg>
+<msg timestamp="20260326 07:59:50.677" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:50.586" endtime="20260326 07:59:50.677"/>
+</kw>
+<kw name="Create Terminal Tester" library="Remote">
+<var>${tester_a}</var>
+<arg>sysbus.uarte20</arg>
+<arg>machine=nodeA</arg>
+<msg timestamp="20260326 07:59:50.678" level="TRACE">Arguments: [ 'sysbus.uarte20' | 'machine=nodeA' ]</msg>
+<msg timestamp="20260326 07:59:50.688" level="TRACE">Return: 0</msg>
+<msg timestamp="20260326 07:59:50.688" level="INFO">${tester_a} = 0</msg>
+<status status="PASS" starttime="20260326 07:59:50.677" endtime="20260326 07:59:50.688"/>
+</kw>
+<kw name="Create Terminal Tester" library="Remote">
+<var>${tester_b}</var>
+<arg>sysbus.uarte20</arg>
+<arg>machine=nodeB</arg>
+<msg timestamp="20260326 07:59:50.689" level="TRACE">Arguments: [ 'sysbus.uarte20' | 'machine=nodeB' ]</msg>
+<msg timestamp="20260326 07:59:50.691" level="TRACE">Return: 1</msg>
+<msg timestamp="20260326 07:59:50.691" level="INFO">${tester_b} = 1</msg>
+<status status="PASS" starttime="20260326 07:59:50.689" endtime="20260326 07:59:50.691"/>
+</kw>
+<kw name="Create Terminal Tester" library="Remote">
+<var>${tester_c}</var>
+<arg>sysbus.uarte20</arg>
+<arg>machine=nodeC</arg>
+<msg timestamp="20260326 07:59:50.692" level="TRACE">Arguments: [ 'sysbus.uarte20' | 'machine=nodeC' ]</msg>
+<msg timestamp="20260326 07:59:50.693" level="TRACE">Return: 2</msg>
+<msg timestamp="20260326 07:59:50.693" level="INFO">${tester_c} = 2</msg>
+<status status="PASS" starttime="20260326 07:59:50.691" endtime="20260326 07:59:50.693"/>
+</kw>
+<kw name="Start Emulation" library="Remote">
+<msg timestamp="20260326 07:59:50.693" level="TRACE">Arguments: [  ]</msg>
+<msg timestamp="20260326 07:59:50.849" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:50.693" endtime="20260326 07:59:50.850"/>
+</kw>
+<kw name="Wait For Line On Uart" library="Remote">
+<arg>Meshtastic boot OK</arg>
+<arg>testerId=${tester_a}</arg>
+<arg>timeout=30</arg>
+<msg timestamp="20260326 07:59:50.850" level="TRACE">Arguments: [ 'Meshtastic boot OK' | 'testerId=0' | 'timeout=30' ]</msg>
+<msg timestamp="20260326 07:59:50.996" level="TRACE">Return: {'Groups': [],
+ 'IsFailingString': False,
+ 'Line': '=== Meshtastic boot OK ===',
+ 'Timestamp': 10.6}</msg>
+<status status="PASS" starttime="20260326 07:59:50.850" endtime="20260326 07:59:50.996"/>
+</kw>
+<kw name="Wait For Line On Uart" library="Remote">
+<arg>Meshtastic boot OK</arg>
+<arg>testerId=${tester_b}</arg>
+<arg>timeout=30</arg>
+<msg timestamp="20260326 07:59:50.997" level="TRACE">Arguments: [ 'Meshtastic boot OK' | 'testerId=1' | 'timeout=30' ]</msg>
+<msg timestamp="20260326 07:59:51.000" level="TRACE">Return: {'Groups': [],
+ 'IsFailingString': False,
+ 'Line': '=== Meshtastic boot OK ===',
+ 'Timestamp': 10.6}</msg>
+<status status="PASS" starttime="20260326 07:59:50.996" endtime="20260326 07:59:51.000"/>
+</kw>
+<kw name="Wait For Line On Uart" library="Remote">
+<arg>Meshtastic boot OK</arg>
+<arg>testerId=${tester_c}</arg>
+<arg>timeout=30</arg>
+<msg timestamp="20260326 07:59:51.000" level="TRACE">Arguments: [ 'Meshtastic boot OK' | 'testerId=2' | 'timeout=30' ]</msg>
+<msg timestamp="20260326 07:59:51.003" level="TRACE">Return: {'Groups': [],
+ 'IsFailingString': False,
+ 'Line': '=== Meshtastic boot OK ===',
+ 'Timestamp': 10.6}</msg>
+<status status="PASS" starttime="20260326 07:59:51.000" endtime="20260326 07:59:51.003"/>
+</kw>
+<kw name="Wait For Line On Uart" library="Remote">
+<arg>text enqueued</arg>
+<arg>testerId=${tester_a}</arg>
+<arg>timeout=60</arg>
+<msg timestamp="20260326 07:59:51.004" level="TRACE">Arguments: [ 'text enqueued' | 'testerId=0' | 'timeout=60' ]</msg>
+<msg timestamp="20260326 07:59:52.789" level="TRACE">Return: {'Groups': [],
+ 'IsFailingString': False,
+ 'Line': 'E2E      : text enqueued id=0xC6333C2E',
+ 'Timestamp': 2011.6}</msg>
+<status status="PASS" starttime="20260326 07:59:51.003" endtime="20260326 07:59:52.789"/>
+</kw>
+<kw name="Wait For Line On Uart" library="Remote">
+<arg>Rebroadcast received message</arg>
+<arg>testerId=${tester_b}</arg>
+<arg>timeout=60</arg>
+<msg timestamp="20260326 07:59:52.789" level="TRACE">Arguments: [ 'Rebroadcast received message' | 'testerId=1' | 'timeout=60' ]</msg>
+<msg timestamp="20260326 07:59:52.890" level="TRACE">Return: {'Groups': [],
+ 'IsFailingString': False,
+ 'Line': 'I Rebroadcast received message coming from 1',
+ 'Timestamp': 2066.1}</msg>
+<status status="PASS" starttime="20260326 07:59:52.789" endtime="20260326 07:59:52.890"/>
+</kw>
+<kw name="Wait For Line On Uart" library="Remote">
+<arg>Received text msg</arg>
+<arg>testerId=${tester_c}</arg>
+<arg>timeout=60</arg>
+<msg timestamp="20260326 07:59:52.891" level="TRACE">Arguments: [ 'Received text msg' | 'testerId=2' | 'timeout=60' ]</msg>
+<msg timestamp="20260326 07:59:53.005" level="TRACE">Return: {'Groups': [],
+ 'IsFailingString': False,
+ 'Line': 'I Received text msg from=0xdead0001, id=0xc6333c2e, msg=Hello Mesh!',
+ 'Timestamp': 2115.9}</msg>
+<status status="PASS" starttime="20260326 07:59:52.890" endtime="20260326 07:59:53.005"/>
+</kw>
+<kw name="Reset Emulation" library="Remote" type="TEARDOWN">
+<msg timestamp="20260326 07:59:53.006" level="TRACE">Arguments: [  ]</msg>
+<msg timestamp="20260326 07:59:53.099" level="TRACE">Return: ''</msg>
+<status status="PASS" starttime="20260326 07:59:53.006" endtime="20260326 07:59:53.099"/>
+</kw>
+<doc>3-node chain: A(0,0) — B(5,0) — C(10,0), range=7.
+A sends broadcast text via real Meshtastic stack.
+B's real FloodingRouter receives and rebroadcasts.
+C receives the relayed packet via TextMessageModule.</doc>
+<status status="PASS" starttime="20260326 07:59:38.819" endtime="20260326 07:59:53.099"/>
+</test>
+<kw name="Teardown" library="renode-keywords" type="TEARDOWN">
+<msg timestamp="20260326 07:59:53.100" level="TRACE">Arguments: [  ]</msg>
+<if>
+<branch type="IF" condition="not ${SKIP_RUNNING_SERVER}">
+<kw name="Stop Remote Server" library="Remote">
+<status status="NOT RUN" starttime="20260326 07:59:53.100" endtime="20260326 07:59:53.100"/>
+</kw>
+<status status="NOT RUN" starttime="20260326 07:59:53.100" endtime="20260326 07:59:53.100"/>
+</branch>
+<status status="PASS" starttime="20260326 07:59:53.100" endtime="20260326 07:59:53.100"/>
+</if>
+<if>
+<branch type="IF" condition="not ${SKIP_RUNNING_SERVER}">
+<kw name="Wait For Process" library="Process">
+<doc>Waits for the process to complete or to reach the given timeout.</doc>
+<status status="NOT RUN" starttime="20260326 07:59:53.100" endtime="20260326 07:59:53.100"/>
+</kw>
+<status status="NOT RUN" starttime="20260326 07:59:53.100" endtime="20260326 07:59:53.100"/>
+</branch>
+<status status="PASS" starttime="20260326 07:59:53.100" endtime="20260326 07:59:53.100"/>
+</if>
+<msg timestamp="20260326 07:59:53.100" level="TRACE">Return: None</msg>
+<status status="PASS" starttime="20260326 07:59:53.099" endtime="20260326 07:59:53.100"/>
+</kw>
+<meta name="HotSpot_Action">-</meta>
+<status status="PASS" starttime="20260326 07:59:38.495" endtime="20260326 07:59:53.100"/>
+</suite>
+<statistics>
+<total>
+<stat pass="1" fail="0" skip="0">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat pass="1" fail="0" skip="0" id="s1" name="Test Suite">Test Suite</stat>
+</suite>
+</statistics>
+<errors>
+</errors>
+</robot>
