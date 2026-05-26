@@ -76,7 +76,21 @@ meshtastic --port /dev/serial/by-id/usb-Seeed_Studio_..._<UID>-if02 --info
 
 GPL-3.0 — see [LICENSE](LICENSE).
 
-Third-party components retain their original licenses:
-- [RadioLib](https://github.com/jgromes/RadioLib) (MIT) — LoRa radio abstraction
-- [Zephyr RTOS](https://github.com/zephyrproject-rtos/zephyr) (Apache-2.0)
-- [nanopb](https://github.com/nanopb/nanopb) (zlib)
+This repository contains third-party components under their own licenses.
+See [THIRD_PARTY_LICENSES](THIRD_PARTY_LICENSES) for full license texts.
+
+| Component | License | Location |
+|-----------|---------|----------|
+| [Meshtastic firmware](https://github.com/meshtastic/firmware) | GPL-3.0 | `src/` (upstream mesh stack) |
+| [Zephyr RTOS](https://github.com/zephyrproject-rtos/zephyr) | Apache-2.0 | Linked via west workspace |
+| [Nordic nrfx HAL](https://github.com/zephyrproject-rtos/hal_nordic) | BSD-3-Clause | Linked via west workspace |
+| CRACEN BA414EP microcode (Nordic) | [Nordic-5-Clause](THIRD_PARTY_LICENSES) | `src/platform/nrf54l15/microcode_binary.h` |
+| [RadioLib](https://github.com/jgromes/RadioLib) | MIT | `lib/RadioLib/` |
+| [nanopb](https://github.com/nanopb/nanopb) | zlib | `zephyr/nanopb/` |
+| [Arduino Crypto](https://github.com/rweather/arduinolibs) | MIT | `lib/Crypto/` (RNG shim only) |
+| [ThingPulse OLED fonts](https://github.com/ThingPulse/esp8266-oled-ssd1306) | MIT | `src/platform/nrf54l15/OLEDDisplayFonts.h` |
+
+**Note:** The CRACEN microcode (`microcode_binary.h`) is licensed under Nordic
+Semiconductor's 5-Clause license, which restricts use to Nordic integrated
+circuits and prohibits reverse engineering of binary forms. See
+[THIRD_PARTY_LICENSES](THIRD_PARTY_LICENSES) for the full license text.
