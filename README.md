@@ -7,22 +7,31 @@ Targets the Seeed Studio XIAO nRF54L15 + Wio-LR2021 LoRa Plus Expansion Board.
 This is a derivative of the [Meshtastic firmware](https://github.com/meshtastic/firmware)
 (GPL-3.0), adapted for the nRF54L15 platform with Zephyr RTOS instead of Arduino/PlatformIO.
 
-> ## ⚠️ Required: patched RadioLib for Multi-SF
+> ## ⚠️ Required: one RadioLib patch for Multi-SF
 >
-> **The Multi-SF bridge will not work with stock RadioLib.** The entire feature
-> depends on knowing *which spreading-factor detector* received each packet, and
-> stock RadioLib discards that information. The vendored copy in `lib/RadioLib`
-> (based on **RadioLib 7.6.0**) carries a small fork patch that exposes it. If
-> you build against an unpatched RadioLib, `getLastRxDetector()` always reports
-> the main SF, so the bridge can only transmit on its main SF and **direct
-> messages to peers on side SFs silently fail.**
+> **The Multi-SF bridge will not work with unpatched RadioLib.** The entire
+> feature depends on knowing *which spreading-factor detector* received each
+> packet. The LR2021 driver itself is upstream RadioLib (added in 7.6.0), but
+> upstream's `getLoRaPacketStatus` **discards the detector field** the chip
+> returns — true even on current `master` (checked 2026-05). The vendored copy
+> in `lib/RadioLib` adds a one-parameter patch that exposes it. Without it,
+> `getLastRxDetector()` always reports the main SF, so the bridge can only
+> transmit on its main SF and **direct messages to peers on side SFs silently
+> fail.**
 >
-> If you replace or update RadioLib (or port this firmware to another framework
-> such as Arduino), you must re-apply the patch below.
+> **Baseline note.** Our vendored RadioLib's `RADIOLIB_VERSION` macro reads
+> `7.6.0.0`, but the code is actually a **post-7.6.0 snapshot** — its
+> `getLoRaPacketStatus` signature already matches upstream `master`
+> (`uint8_t* cr, bool* crc, ...`), not the 7.6.0 *release tag*
+> (`uint8_t* crc, uint8_t* cr, ...`). That `cr`/`crc` order and the `bool* crc`
+> type are **upstream's** change, not ours — do not "fix" them. **Diff against a
+> recent upstream (`master` / 7.7.x), not the 7.6.0 tag**, or you will see
+> spurious differences.
 >
-> **1. `lib/RadioLib/src/modules/LR2021/LR2021.h`** — add a 7th `detector`
-> parameter to `getLoRaPacketStatus`. (Note this fork also orders the first two
-> parameters as `cr, crc`, not stock's `crc, cr`.)
+> **The only fork change is the added `detector` out-parameter — two spots:**
+>
+> **1. `lib/RadioLib/src/modules/LR2021/LR2021.h`** — append a 7th `detector`
+> parameter to the `getLoRaPacketStatus` declaration:
 >
 > ```cpp
 > int16_t getLoRaPacketStatus(uint8_t* cr, bool* crc, uint8_t* packetLen = NULL,
