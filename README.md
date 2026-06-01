@@ -7,6 +7,47 @@ Targets the Seeed Studio XIAO nRF54L15 + Wio-LR2021 LoRa Plus Expansion Board.
 This is a derivative of the [Meshtastic firmware](https://github.com/meshtastic/firmware)
 (GPL-3.0), adapted for the nRF54L15 platform with Zephyr RTOS instead of Arduino/PlatformIO.
 
+> ## ⚠️ Required: patched RadioLib for Multi-SF
+>
+> **The Multi-SF bridge will not work with stock RadioLib.** The entire feature
+> depends on knowing *which spreading-factor detector* received each packet, and
+> stock RadioLib discards that information. The vendored copy in `lib/RadioLib`
+> (based on **RadioLib 7.6.0**) carries a small fork patch that exposes it. If
+> you build against an unpatched RadioLib, `getLastRxDetector()` always reports
+> the main SF, so the bridge can only transmit on its main SF and **direct
+> messages to peers on side SFs silently fail.**
+>
+> If you replace or update RadioLib (or port this firmware to another framework
+> such as Arduino), you must re-apply the patch below.
+>
+> **1. `lib/RadioLib/src/modules/LR2021/LR2021.h`** — add a 7th `detector`
+> parameter to `getLoRaPacketStatus`. (Note this fork also orders the first two
+> parameters as `cr, crc`, not stock's `crc, cr`.)
+>
+> ```cpp
+> int16_t getLoRaPacketStatus(uint8_t* cr, bool* crc, uint8_t* packetLen = NULL,
+>     float* snrPacket = NULL, float* rssiPacket = NULL,
+>     float* rssiSignalPacket = NULL, uint8_t* detector = NULL);
+> ```
+>
+> **2. `lib/RadioLib/src/modules/LR2021/LR2021_cmds_lora.cpp`** — inside
+> `getLoRaPacketStatus`, after the `rssiSignalPacket` block and before
+> `return(state)`, extract the detector field the chip already returns:
+>
+> ```cpp
+> // detector(3:0) is in buff[5] bits 5:2 — one-hot: 0001=Main, 0010=Side1, 0100=Side2, 1000=Side3
+> if(detector) { *detector = (buff[5] >> 2) & 0x0F; }
+> ```
+>
+> **3. Timing contract (just as important as the patch).** The chip's packet-status
+> register reflects only the *most recent* packet. `getLastRxDetector()` must be
+> read in the same RX-done window as SNR/RSSI — **before** `readData()` /
+> `startReceive()` re-arms the receiver. Reading it afterwards returns a stale
+> "main" detector. In this firmware that read happens inside
+> `LR2021Interface::addReceiveMetadata()`, before RX is re-armed; preserve that
+> ordering (or cache the detector atomically alongside SNR/RSSI per packet) in
+> any port.
+
 ## Features
 
 - Full Meshtastic mesh stack (flooding router, reliable routing, PKI, channels)
