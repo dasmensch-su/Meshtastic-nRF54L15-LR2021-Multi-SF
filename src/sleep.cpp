@@ -8,6 +8,7 @@
 #include "MeshRadio.h"
 #include "MeshService.h"
 #include "NodeDB.h"
+#include "NodeSFTracker.h"
 #include "PowerMon.h"
 #include "TransmitHistory.h"
 #include "detect/LoRaRadioType.h"
@@ -242,6 +243,9 @@ void doDeepSleep(uint32_t msecToWake, bool skipPreflight = false, bool skipSaveN
     // Persist broadcast transmit times so throttle survives reboot
     if (transmitHistory)
         transmitHistory->saveToDisk();
+
+    // Persist the Multi-SF per-peer SF/hash map (force past the write throttle).
+    nodeSFTracker.saveToDisk(true);
 
 #ifdef PIN_POWER_EN
     digitalWrite(PIN_POWER_EN, LOW);

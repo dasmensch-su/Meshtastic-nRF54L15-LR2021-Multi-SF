@@ -26,6 +26,8 @@
 #include "MultiSFBridge.h"
 #endif
 #include "NodeDB.h"
+#include "NodeSFTracker.h"
+#include "TransmitHistory.h"
 #include "Router.h"
 #include "ReliableRouter.h"
 #include "CryptoEngine.h"
@@ -219,6 +221,10 @@ int main(void)
     /* NodeDB — real upstream implementation, loads config from LittleFS */
     nodeDB = new NodeDB();
     printk("Mesh     : NodeDB created (node=%08X)\n", nodeDB->getNodeNum());
+
+    /* Load persisted sidecar data that lives outside NodeDB */
+    TransmitHistory::getInstance()->loadFromDisk();
+    nodeSFTracker.loadFromDisk();
 
     /* Set default region only if not already configured (e.g., from flash) */
     if (config.lora.region == meshtastic_Config_LoRaConfig_RegionCode_UNSET) {

@@ -429,17 +429,22 @@ void LR2021Interface::addReceiveMetadata(meshtastic_MeshPacket *mp)
            det, rxSf, (unsigned)mp->from, (double)mp->rx_snr, (int)mp->rx_rssi);
 
     /* Two-tier SF recording:
-     * Tier 1 (direct): hop_start == hop_limit → the SF is genuinely the
-     * originator's TX SF. Stored with direct=true, always takes priority.
-     * Tier 2 (relay-path): hop_limit < hop_start → the SF is the last relay's
-     * SF, not the originator's. Stored with direct=false — provides a working
-     * delivery path but never overwrites a direct observation.
+     * Tier 1 (direct): hop_start == hop_limit means the originator's TX SF.
+     * On some firmware paths hop_limit arrives already decremented by 1 (the
+     * receiver-side accounting), so we also accept hop_start == hop_limit + 1
+     * as direct. Stored with direct=true, always takes priority.
+     * Tier 2 (relay-path): hop_limit < hop_start by 2+ hops → the SF is the
+     * last relay's SF. Stored with direct=false — provides a working delivery
+     * path but never overwrites a direct observation.
      *
      * Filter out: self-sourced packets, broadcast from addr, hop_start==0 (old
      * firmware — can't determine relay status so skip conservatively). */
+    bool isDirect = (mp->hop_start > 0 &&
+                     (mp->hop_limit == mp->hop_start ||
+                      mp->hop_limit + 1 == mp->hop_start));
     if (mp->from != 0 && mp->from != NODENUM_BROADCAST &&
         mp->from != nodeDB->getNodeNum() &&
-        mp->hop_start > 0 && mp->hop_limit == mp->hop_start) {
+        isDirect) {
         nodeSFTracker.update(mp->from, rxSf);
     }
 
@@ -450,7 +455,7 @@ void LR2021Interface::addReceiveMetadata(meshtastic_MeshPacket *mp)
      * Direct observations (above) always take priority. */
     if (mp->from != 0 && mp->from != NODENUM_BROADCAST &&
         mp->from != nodeDB->getNodeNum() &&
-        mp->hop_start > 0 && mp->hop_limit < mp->hop_start) {
+        mp->hop_start > 0 && !isDirect) {
         nodeSFTracker.update(mp->from, rxSf, false);
     }
 
@@ -479,7 +484,7 @@ void LR2021Interface::addReceiveMetadata(meshtastic_MeshPacket *mp)
      * from the relay-path entry and skip fan-out. */
     if (mp->from != 0 && mp->from != NODENUM_BROADCAST &&
         mp->from != nodeDB->getNodeNum() &&
-        mp->hop_start > 0 && mp->hop_limit < mp->hop_start &&
+        mp->hop_start > 0 && !isDirect &&
         mp->to != NODENUM_BROADCAST && mp->to != 0 &&
         mp->to != nodeDB->getNodeNum()) {
         nodeSFTracker.update(mp->to, rxSf, false);

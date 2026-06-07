@@ -8,6 +8,7 @@
 #include "PowerFSM.h"
 #include "PowerMon.h"
 #include "RadioLibInterface.h"
+#include "NodeSFTracker.h"
 #include "ReliableRouter.h"
 #include "TransmitHistory.h"
 #include "airtime.h"
@@ -707,6 +708,10 @@ void setup()
 
     // Initialize transmit history to persist broadcast throttle timers across reboots
     TransmitHistory::getInstance()->loadFromDisk();
+
+    // Restore the Multi-SF per-peer SF/channel-hash map so cross-SF unicasts can
+    // reach known neighbors immediately after a reboot, before re-hearing them.
+    nodeSFTracker.loadFromDisk();
 #if HAS_TFT
     if (config.display.displaymode == meshtastic_Config_DisplayConfig_DisplayMode_COLOR) {
         tftSetup();

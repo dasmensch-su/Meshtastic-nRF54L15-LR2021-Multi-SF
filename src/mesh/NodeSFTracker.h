@@ -71,8 +71,20 @@ class NodeSFTracker
     /* Current number of tracked peers. */
     size_t size() const { return count; }
 
-    /* Empty the tracker (e.g. on factory reset). */
-    void clear() { count = 0; }
+    /* Empty the tracker (e.g. on factory reset). Also wipes the on-disk file
+     * so a reboot doesn't repopulate stale entries. */
+    void clear();
+
+    /* Load persisted direct-neighbor SF/hash entries from the filesystem. Call
+     * once during init after the filesystem is ready (alongside other on-disk
+     * state). No-op if no file exists or the build has no filesystem. */
+    void loadFromDisk();
+
+    /* Flush dirty entries to disk. Throttled internally — at most one write per
+     * SAVE_INTERVAL_MS — and a no-op when nothing has changed. `force=true`
+     * bypasses the throttle (used at shutdown / deep sleep). Returns true if the
+     * data is persisted (or there was nothing to write), false on write failure. */
+    bool saveToDisk(bool force = false);
 
   private:
     /* Packed to keep this well under 1.5 KB for MAX_NUM_NODES=100. */
@@ -90,6 +102,39 @@ class NodeSFTracker
     Entry entries[MAX_NUM_NODES] = {};
     size_t count = 0;
     uint32_t nextSeq = 1;
+
+    /* --- persistence --- */
+
+    /* Only the fields that are meaningful across a reboot are written. seq is
+     * an in-RAM LRU counter (re-seeded on load); lastSf is derived from sfMask;
+     * relay-path entries are skipped entirely (the path may have changed). */
+    struct __attribute__((packed)) DiskEntry {
+        NodeNum node;
+        uint8_t sfMask;
+        uint8_t peerHash;
+    };
+
+    struct __attribute__((packed)) DiskHeader {
+        uint32_t magic;
+        uint8_t version;
+        uint8_t count;
+    };
+
+    static constexpr const char *FILENAME = "/prefs/node_sf.dat";
+    static constexpr uint32_t MAGIC = 0x5346544b; // "SFTK"
+    static constexpr uint8_t VERSION = 1;
+    /* Don't persist more than this many peers — bounds the file and write cost.
+     * MAX_NUM_NODES is the in-RAM cap; on a busy mesh the LRU keeps the most
+     * recently heard, which is what we want to survive a reboot anyway. */
+    static constexpr uint8_t MAX_DISK_ENTRIES = 64;
+    static constexpr uint32_t SAVE_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+
+    bool dirty = false;
+    uint32_t lastDiskSave = 0; // millis() of last successful flush
+
+    /* Mark the in-memory state changed; trigger a throttled flush. Called from
+     * update()/setHash() whenever a persisted field actually changes. */
+    void markDirty();
 };
 
 extern NodeSFTracker nodeSFTracker;
