@@ -284,7 +284,7 @@ bool LR2021Interface::startSend(meshtastic_MeshPacket *txp)
             if (lookupNode == 0) {
                 lookupNode = txp->to;
             }
-            uint8_t peerSf = nodeSFTracker.lookup(lookupNode);
+            uint8_t peerSf = nodeSFTracker.lastSeenSf(lookupNode);
             if (peerSf != 0 && peerSf != sf) {
                 targetSf = peerSf;
                 qprintk("LR2021   : TX retarget SF%u -> SF%u to 0x%08x (via 0x%08x)\n",
