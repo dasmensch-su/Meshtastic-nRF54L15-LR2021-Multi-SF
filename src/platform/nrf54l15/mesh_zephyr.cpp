@@ -11,6 +11,7 @@
 #include "MeshRadio.h"
 #include "Router.h"
 #include "NodeDB.h"
+#include "target_specific.h"
 #include "Channels.h"
 #include "detect/LoRaRadioType.h"
 #include "error.h"
@@ -176,10 +177,18 @@ uint32_t          timeLastPowered = 0;
 
 const char *getDeviceName()
 {
+    uint8_t dmac[6];
+    getMacAddr(dmac);
+
     static char name[32];
-    NodeNum myNum = nodeDB ? nodeDB->getNodeNum() : 0;
-    snprintf(name, sizeof(name), "Meshtastic_%04X",
-             (unsigned)(myNum & 0xFFFFu));
+    char suffix[8];
+    snprintf(suffix, sizeof(suffix), "%02x%02x", dmac[4], dmac[5]);
+
+    if (owner.short_name[0] != '\0' && strcmp(owner.short_name, suffix) != 0) {
+        snprintf(name, sizeof(name), "%s_%s", owner.short_name, suffix);
+    } else {
+        snprintf(name, sizeof(name), "Meshtastic_%s", suffix);
+    }
     return name;
 }
 

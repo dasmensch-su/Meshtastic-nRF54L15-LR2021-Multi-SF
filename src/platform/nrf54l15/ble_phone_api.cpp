@@ -25,6 +25,7 @@
 
 #include "PhoneAPI.h"
 #include "NodeDB.h"
+#include "main.h"
 
 /* Forward declaration */
 void ble_notify_fromnum(void);
@@ -244,21 +245,31 @@ static const struct bt_data adv_data[] = {
     BT_DATA_BYTES(BT_DATA_UUID128_ALL, MESH_SERVICE_UUID_VAL),
 };
 
-static const struct bt_data scan_resp[] = {
-    BT_DATA(BT_DATA_NAME_COMPLETE,
-            CONFIG_BT_DEVICE_NAME,
-            sizeof(CONFIG_BT_DEVICE_NAME) - 1),
+static char ble_adv_name[32];
+
+static struct bt_data scan_resp[] = {
+    BT_DATA(BT_DATA_NAME_COMPLETE, ble_adv_name, 0),
 };
 
 void ble_start_advertising(void)
 {
+    const char *devName = getDeviceName();
+    size_t len = strlen(devName);
+    if (len >= sizeof(ble_adv_name))
+        len = sizeof(ble_adv_name) - 1;
+    memcpy(ble_adv_name, devName, len);
+    ble_adv_name[len] = '\0';
+    scan_resp[0].data_len = len;
+
+    bt_set_name(ble_adv_name);
+
     int err = bt_le_adv_start(BT_LE_ADV_CONN,
                               adv_data, ARRAY_SIZE(adv_data),
                               scan_resp, ARRAY_SIZE(scan_resp));
     if (err) {
         printk("BLE      : Advertising start failed (err %d)\n", err);
     } else {
-        printk("BLE      : Connectable advertising started\n");
+        printk("BLE      : Connectable advertising as '%s'\n", ble_adv_name);
     }
 }
 
