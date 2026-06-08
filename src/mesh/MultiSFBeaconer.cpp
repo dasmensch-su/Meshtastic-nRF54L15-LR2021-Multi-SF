@@ -3,7 +3,10 @@
 #include <zephyr/sys/printk.h>
 
 #include "LR2021Interface.h"
+#include "MeshService.h"
 #include "MeshTypes.h"
+#include "NodeDB.h"
+#include "Router.h"
 #include "configuration.h"
 #include "mesh/Default.h"
 #include "modules/NodeInfoModule.h"
@@ -21,8 +24,12 @@ MultiSFBeaconer::MultiSFBeaconer(LR2021Interface *iface)
         return;
     }
 
-    /* Stagger first tick by 60 s so boot-time NodeInfo from NodeInfoModule
-     * lands first and doesn't collide with our first rotation beacon. */
+    /* After boot, burst a NodeInfo on every SF so peers on all SFs learn our
+     * current public key immediately — don't wait for the round-robin to cycle
+     * through each one (could take rotationLen × broadcast_interval seconds).
+     * Stagger the first burst tick by 60s so NodeInfoModule's own boot send
+     * goes out first and populates transmitHistory. */
+    bootBurstRemaining = rotationLen;
     setIntervalFromNow(60 * 1000);
 
     qprintk("MultiSFBeacon: rotation [");
@@ -70,6 +77,14 @@ int32_t MultiSFBeaconer::runOnce()
      * slot is handled naturally (forcedNextTxSf == main → no retarget). */
     radioIf->setForcedNextTxSf(sfToSend);
 
+    if (bootBurstRemaining > 0) {
+        bootBurstRemaining--;
+        qprintk("MultiSFBeacon: boot burst NodeInfo on SF%u (%u remaining)\n",
+               sfToSend, bootBurstRemaining);
+        sendNodeInfoDirect();
+        return 5 * 1000;
+    }
+
     qprintk("MultiSFBeacon: broadcasting NodeInfo on SF%u (slot %u/%u)\n",
            sfToSend, (unsigned)((cursor == 0) ? rotationLen : cursor), rotationLen);
 
@@ -77,4 +92,19 @@ int32_t MultiSFBeaconer::runOnce()
 
     /* Next SF in (node_info_broadcast_secs / rotationLen). */
     return (default_node_info_broadcast_secs * 1000) / rotationLen;
+}
+
+void MultiSFBeaconer::sendNodeInfoDirect()
+{
+    meshtastic_User u = owner;
+    strcpy(u.id, nodeDB->getNodeId().c_str());
+
+    meshtastic_MeshPacket *p = router->allocForSending();
+    p->to = NODENUM_BROADCAST;
+    p->decoded.portnum = meshtastic_PortNum_NODEINFO_APP;
+    p->priority = meshtastic_MeshPacket_Priority_BACKGROUND;
+    p->decoded.payload.size =
+        pb_encode_to_bytes(p->decoded.payload.bytes, sizeof(p->decoded.payload.bytes),
+                           &meshtastic_User_msg, &u);
+    service->sendToMesh(p, RX_SRC_LOCAL, true);
 }
