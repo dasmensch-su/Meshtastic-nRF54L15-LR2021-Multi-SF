@@ -43,16 +43,10 @@ The LR2021's parallel spreading-factor detection allows one node to act as a
 transparent bridge between peers running on different LoRa presets (e.g.,
 SHORT_FAST SF7, SHORT_SLOW SF8, MEDIUM_FAST SF9, LONG_FAST SF11).
 
-> **Depends on a one-parameter RadioLib patch.** "Parallel RX, tagged with
-> originating SF" below requires exposing the LR2021's per-packet detector mask.
-> The LR2021 driver is upstream RadioLib, but upstream's `getLoRaPacketStatus`
-> discards that field (true even on current `master`); our vendored copy adds a
-> single `detector` out-parameter to expose it. Without the patch
-> `getLastRxDetector()` always returns the main SF and the bridge can only TX on
-> its main SF — side-SF DMs silently fail. The exact patch, the
-> diff-against-`master`-not-the-7.6.0-tag caveat, and the timing contract are
-> documented at the top of the [README](../README.md#-required-one-radiolib-patch-for-multi-sf).
-> Re-apply it whenever you update or replace RadioLib, or port to another framework.
+> **RadioLib detector parameter.** Parallel RX tagging requires the `detector`
+> out-parameter on `getLoRaPacketStatus()`, which was merged into upstream
+> RadioLib in June 2026. The vendored copy includes this change. See the
+> [README](../README.md#radiolib-detector-parameter) for the timing contract.
 
 | Feature | Status | Notes |
 |---------|--------|-------|

@@ -7,55 +7,20 @@ Targets the Seeed Studio XIAO nRF54L15 + Wio-LR2021 LoRa Plus Expansion Board.
 This is a derivative of the [Meshtastic firmware](https://github.com/meshtastic/firmware)
 (GPL-3.0), adapted for the nRF54L15 platform with Zephyr RTOS instead of Arduino/PlatformIO.
 
-> ## ⚠️ Required: one RadioLib patch for Multi-SF
+> ## RadioLib detector parameter
 >
-> **The Multi-SF bridge will not work with unpatched RadioLib.** The entire
-> feature depends on knowing *which spreading-factor detector* received each
-> packet. The LR2021 driver itself is upstream RadioLib (added in 7.6.0), but
-> upstream's `getLoRaPacketStatus` **discards the detector field** the chip
-> returns — true even on current `master` (checked 2026-05). The vendored copy
-> in `lib/RadioLib` adds a one-parameter patch that exposes it. Without it,
-> `getLastRxDetector()` always reports the main SF, so the bridge can only
-> transmit on its main SF and **direct messages to peers on side SFs silently
-> fail.**
+> The Multi-SF bridge depends on knowing which spreading-factor detector
+> received each packet. This required a `detector` out-parameter on
+> `getLoRaPacketStatus()` that was not available upstream. The parameter was
+> accepted and **merged into upstream RadioLib** (June 2026). The vendored copy
+> in `lib/RadioLib` includes this change; future RadioLib updates (post-merge)
+> will include it natively.
 >
-> **Baseline note.** Our vendored RadioLib's `RADIOLIB_VERSION` macro reads
-> `7.6.0.0`, but the code is actually a **post-7.6.0 snapshot** — its
-> `getLoRaPacketStatus` signature already matches upstream `master`
-> (`uint8_t* cr, bool* crc, ...`), not the 7.6.0 *release tag*
-> (`uint8_t* crc, uint8_t* cr, ...`). That `cr`/`crc` order and the `bool* crc`
-> type are **upstream's** change, not ours — do not "fix" them. **Diff against a
-> recent upstream (`master` / 7.7.x), not the 7.6.0 tag**, or you will see
-> spurious differences.
->
-> **The only fork change is the added `detector` out-parameter — two spots:**
->
-> **1. `lib/RadioLib/src/modules/LR2021/LR2021.h`** — append a 7th `detector`
-> parameter to the `getLoRaPacketStatus` declaration:
->
-> ```cpp
-> int16_t getLoRaPacketStatus(uint8_t* cr, bool* crc, uint8_t* packetLen = NULL,
->     float* snrPacket = NULL, float* rssiPacket = NULL,
->     float* rssiSignalPacket = NULL, uint8_t* detector = NULL);
-> ```
->
-> **2. `lib/RadioLib/src/modules/LR2021/LR2021_cmds_lora.cpp`** — inside
-> `getLoRaPacketStatus`, after the `rssiSignalPacket` block and before
-> `return(state)`, extract the detector field the chip already returns:
->
-> ```cpp
-> // detector(3:0) is in buff[5] bits 5:2 — one-hot: 0001=Main, 0010=Side1, 0100=Side2, 1000=Side3
-> if(detector) { *detector = (buff[5] >> 2) & 0x0F; }
-> ```
->
-> **3. Timing contract (just as important as the patch).** The chip's packet-status
-> register reflects only the *most recent* packet. `getLastRxDetector()` must be
-> read in the same RX-done window as SNR/RSSI — **before** `readData()` /
-> `startReceive()` re-arms the receiver. Reading it afterwards returns a stale
-> "main" detector. In this firmware that read happens inside
-> `LR2021Interface::addReceiveMetadata()`, before RX is re-armed; preserve that
-> ordering (or cache the detector atomically alongside SNR/RSSI per packet) in
-> any port.
+> **Timing contract.** The chip's packet-status register reflects only the
+> *most recent* packet. `getLastRxDetector()` must be read in the same RX-done
+> window as SNR/RSSI -- **before** `readData()` / `startReceive()` re-arms the
+> receiver. In this firmware that read happens inside
+> `LR2021Interface::addReceiveMetadata()`, before RX is re-armed.
 
 ## Features
 
