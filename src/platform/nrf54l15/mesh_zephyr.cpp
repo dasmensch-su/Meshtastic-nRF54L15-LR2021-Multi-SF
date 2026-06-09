@@ -485,6 +485,13 @@ void RadioInterface::applyModemConfig()
         savedChannelNum = 0;
     }
 
+    if (config.lora.override_frequency) {
+        savedFreq = config.lora.override_frequency;
+        savedChannelNum = (uint32_t)-1;
+    }
+
+    savedFreq += config.lora.frequency_offset;
+
     slotTimeMsec = computeSlotTimeMsec();
 
     LOG_INFO("RadioInterface: SF%u BW%.0fkHz CR4/%u %.3fMHz %ddBm",
