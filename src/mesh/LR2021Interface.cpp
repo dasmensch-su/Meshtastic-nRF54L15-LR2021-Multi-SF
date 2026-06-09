@@ -606,17 +606,10 @@ uint8_t LR2021Interface::getLastRxDetector()
 {
     uint8_t cr_;
     bool crc_;
-    uint8_t detMask = 0;
-    int16_t res = lora.getLoRaPacketStatus(&cr_, &crc_, NULL, NULL, NULL, NULL, &detMask);
+    uint8_t detIdx = 0xFF;
+    int16_t res = lora.getLoRaPacketStatus(&cr_, &crc_, NULL, NULL, NULL, NULL, &detIdx);
     if (res != RADIOLIB_ERR_NONE) return 0xFF;
-    /* One-hot → index. 0001=0, 0010=1, 0100=2, 1000=3. */
-    switch (detMask) {
-        case 0x01: return 0;
-        case 0x02: return 1;
-        case 0x04: return 2;
-        case 0x08: return 3;
-        default:   return 0xFF;  /* unexpected / zero mask */
-    }
+    return detIdx;
 }
 
 /* ---------- wideLora ----------------------------------------------------- */

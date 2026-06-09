@@ -90,8 +90,13 @@ int16_t LR2021::getLoRaPacketStatus(uint8_t* cr, bool* crc, uint8_t* packetLen, 
     raw |= buff[5] & 0x01;
     *rssiSignalPacket = (float)raw / -2.0f;
   }
-  // detector(3:0) is in buff[5] bits 5:2 — one-hot: 0001=Main, 0010=Side1, 0100=Side2, 1000=Side3
-  if(detector) { *detector = (buff[5] >> 2) & 0x0F; }
+  if(detector) {
+    uint8_t det = (buff[5] >> 2) & 0x0F;
+    if(det == 0x01) { *detector = 0; }
+    else if(det == 0x02) { *detector = 1; }
+    else if(det == 0x04) { *detector = 2; }
+    else if(det == 0x08) { *detector = 3; }
+  }
   return(state);
 }
 
